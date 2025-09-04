@@ -13,7 +13,9 @@ import Combine
 enum Position: String, CaseIterable, Codable, Hashable {
     case goalkeeper = "Goalkeeper (GK)"
     case defense = "Defense (DF)"
+    case midfield = "Midfield (MF)"
     case attack = "Attack (AT)"
+    case substitute = "Substitute (SUB)"
 }
 
 enum GameHalf: String, Codable {
@@ -827,12 +829,13 @@ final class PreviewManagers: ObservableObject {
                 Player(name: "Carlos Vega", number: 3, position: .defense),
                 Player(name: "Diego Ramos", number: 4, position: .defense),
                 Player(name: "Ethan Park", number: 5, position: .defense),
-                Player(name: "Felix Hart", number: 6, position: .attack),
-                Player(name: "George Li", number: 7, position: .attack),
-                Player(name: "Hannah Kim", number: 8, position: .attack),
-                Player(name: "Ivy Smith", number: 9, position: .attack),
+                Player(name: "Felix Hart", number: 6, position: .midfield),
+                Player(name: "George Li", number: 7, position: .midfield),
+                Player(name: "Hannah Kim", number: 8, position: .midfield),
+                Player(name: "Ivy Smith", number: 9, position: .midfield),
                 Player(name: "Jack Turner", number: 10, position: .attack),
-                Player(name: "Liam Young", number: 11, position: .attack)
+                Player(name: "Liam Young", number: 11, position: .attack),
+                Player(name: "Arnold Yount", number: 18, position: .substitute),
             ]
             rosterManager.homeTeamName = "TIGERS"
 
@@ -903,20 +906,20 @@ struct SoccerTrackerApp_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             PopulatedPreviewView()
-                .previewDisplayName("Populated — iPhone 14")
-                .previewDevice("iPhone 14")
+                .previewDisplayName("Populated — iPhone 16 Pro Max")
+                .previewDevice("iPhone 16 Pro Max")
 
-            PopulatedPreviewView()
-                .previewDisplayName("Populated — iPad Pro (12.9-inch)")
-                .previewDevice("iPad Pro (12.9-inch) (6th generation)")
-
-            EmptyPreviewView()
-                .previewDisplayName("Empty — iPhone 14")
-                .previewDevice("iPhone 14")
+//            PopulatedPreviewView()
+//                .previewDisplayName("Populated — iPad Pro 11-inch (M4)")
+//                .previewDevice("iPad Pro 11-inch (M4)")
 
             EmptyPreviewView()
-                .previewDisplayName("Empty — iPad Pro (12.9-inch)")
-                .previewDevice("iPad Pro (12.9-inch) (6th generation)")
+                .previewDisplayName("Empty — iPhone 16 Pro Max")
+                .previewDevice("iPhone 16 Pro Max")
+
+//            EmptyPreviewView()
+//                .previewDisplayName("Empty — iPad Pro 11-inch (M4)")
+//                .previewDevice("iPad Pro 11-inch (M4)")
         }
     }
 }
