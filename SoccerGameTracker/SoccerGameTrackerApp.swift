@@ -727,7 +727,7 @@ struct GameHistoryView: View {
                     .disabled(selection.isEmpty)
                 }
 //                if editMode?.wrappedValue.isEditing == true {
-//                    
+//
 //                }
             }
             .alert("Confirm Deletion", isPresented: $showingDeleteAlert, presenting: gameIDsToDelete) { _ in
@@ -807,3 +807,118 @@ struct SoccerTrackerApp: App {
         }
     }
 }
+
+#if DEBUG
+final class PreviewManagers: ObservableObject {
+    let rosterManager: RosterManager
+    let gameManager: GameManager
+    let historyManager: GameHistoryManager
+
+    init(populated: Bool) {
+        rosterManager = RosterManager()
+        gameManager = GameManager()
+        historyManager = GameHistoryManager()
+
+        if populated {
+            // 11-player roster
+            rosterManager.roster = [
+                Player(name: "Alex Morgan", number: 1, position: .goalkeeper),
+                Player(name: "Ben Carter", number: 2, position: .defense),
+                Player(name: "Carlos Vega", number: 3, position: .defense),
+                Player(name: "Diego Ramos", number: 4, position: .defense),
+                Player(name: "Ethan Park", number: 5, position: .defense),
+                Player(name: "Felix Hart", number: 6, position: .attack),
+                Player(name: "George Li", number: 7, position: .attack),
+                Player(name: "Hannah Kim", number: 8, position: .attack),
+                Player(name: "Ivy Smith", number: 9, position: .attack),
+                Player(name: "Jack Turner", number: 10, position: .attack),
+                Player(name: "Liam Young", number: 11, position: .attack)
+            ]
+            rosterManager.homeTeamName = "TIGERS"
+
+            // Active game for populated preview
+            let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "Home Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            activeGame.ourScore = 2
+            activeGame.opponentScore = 1
+            if activeGame.playerStats.indices.contains(8) { activeGame.playerStats[8].goals = 1 }
+            if activeGame.playerStats.indices.contains(0) { activeGame.playerStats[0].saves = 2 }
+            gameManager.currentGame = activeGame
+
+            // Multiple past games in history
+            let past1 = Game(opponentName: "Eagles", gameDate: Date().addingTimeInterval(-86400 * 3), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            past1.ourScore = 3
+            past1.opponentScore = 2
+            if past1.playerStats.indices.contains(6) { past1.playerStats[6].goals = 2 }
+            if past1.playerStats.indices.contains(5) { past1.playerStats[5].assists = 1 }
+
+            let past2 = Game(opponentName: "Lions", gameDate: Date().addingTimeInterval(-86400 * 10), location: "Home Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            past2.ourScore = 1
+            past2.opponentScore = 1
+            if past2.playerStats.indices.contains(2) { past2.playerStats[2].saves = 1 }
+
+            let past3 = Game(opponentName: "Panthers", gameDate: Date().addingTimeInterval(-86400 * 30), location: "Neutral", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            past3.ourScore = 0
+            past3.opponentScore = 2
+            if past3.playerStats.indices.contains(0) { past3.playerStats[0].saves = 4 }
+
+            let past4 = Game(opponentName: "Wolves", gameDate: Date().addingTimeInterval(-86400 * 60), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            past4.ourScore = 4
+            past4.opponentScore = 0
+            if past4.playerStats.indices.contains(9) { past4.playerStats[9].goals = 2 }
+            if past4.playerStats.indices.contains(10) { past4.playerStats[10].assists = 1 }
+
+            historyManager.gameHistory = [past1, past2, past3, past4]
+        } else {
+            // Empty / fresh install
+            rosterManager.roster = []
+            rosterManager.homeTeamName = "HOME"
+            historyManager.gameHistory = []
+        }
+
+        rosterManager.gameManager = gameManager
+    }
+}
+
+struct PopulatedPreviewView: View {
+    @StateObject private var managers = PreviewManagers(populated: true)
+    var body: some View {
+        ContentView()
+            .environmentObject(managers.gameManager)
+            .environmentObject(managers.historyManager)
+            .environmentObject(managers.rosterManager)
+    }
+}
+
+struct EmptyPreviewView: View {
+    @StateObject private var managers = PreviewManagers(populated: false)
+    var body: some View {
+        ContentView()
+            .environmentObject(managers.gameManager)
+            .environmentObject(managers.historyManager)
+            .environmentObject(managers.rosterManager)
+    }
+}
+
+struct SoccerTrackerApp_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            PopulatedPreviewView()
+                .previewDisplayName("Populated — iPhone 14")
+                .previewDevice("iPhone 14")
+
+            PopulatedPreviewView()
+                .previewDisplayName("Populated — iPad Pro (12.9-inch)")
+                .previewDevice("iPad Pro (12.9-inch) (6th generation)")
+
+            EmptyPreviewView()
+                .previewDisplayName("Empty — iPhone 14")
+                .previewDevice("iPhone 14")
+
+            EmptyPreviewView()
+                .previewDisplayName("Empty — iPad Pro (12.9-inch)")
+                .previewDevice("iPad Pro (12.9-inch) (6th generation)")
+        }
+    }
+}
+
+#endif
