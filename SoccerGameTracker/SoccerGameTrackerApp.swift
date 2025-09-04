@@ -511,7 +511,7 @@ struct GameSetupView: View {
     }
 }
 
-// MARK: - GameTrackerView
+// MARK: - GameTrackerView - Live Game
 struct GameTrackerView: View {
     @EnvironmentObject var rosterManager: RosterManager
     @StateObject var game: Game
@@ -544,7 +544,7 @@ struct GameTrackerView: View {
                          Text(game.currentHalf.rawValue).font(.subheadline).foregroundColor(.secondary)
                          Text(game.timeString()).font(.system(size: 32, weight: .bold, design: .monospaced))
                         Button(action: { game.isTimerRunning ? game.stopTimer() : game.startTimer() }) {
-                            Image(systemName: game.isTimerRunning ? "timer.circle.fill" : "timer").font(.largeTitle)
+                            Image(systemName: game.isTimerRunning ? "stop.circle" : "timer").font(.largeTitle)
                         }
                     }
                     Spacer()
@@ -565,16 +565,19 @@ struct GameTrackerView: View {
                 VStack(alignment: .leading) {
                     Text("\(stats.name) (\(stats.number))").font(.headline)
                     HStack(spacing: 15) {
-//                        if stats.position != .goalkeeper {
-//                            StatButton(label: "Goal", value: $stats.goals, onIncrement: { game.ourScore += 1; stats.totalShots += 1 }, onDecrement: { if game.ourScore > 0 { game.ourScore -= 1 }; if stats.totalShots > 0 { stats.totalShots -= 1 } })
-//                            StatButton(label: "Shot", value: $stats.totalShots)
-//                            StatButton(label: "Assist", value: $stats.assists)
-//                        } else {
-                            StatButton(label: "Goal", value: $stats.goals, onIncrement: { game.ourScore += 1; stats.totalShots += 1 }, onDecrement: { if game.ourScore > 0 { game.ourScore -= 1 }; if stats.totalShots > 0 { stats.totalShots -= 1 } })
-                            StatButton(label: "Shot", value: $stats.totalShots)
-                            StatButton(label: "Assist", value: $stats.assists)
-                            StatButton(label: "Save", value: $stats.saves)
-//                        }
+                        if stats.position != .goalkeeper {
+                            StatButton(label: "Goals", value: $stats.goals, onIncrement: { game.ourScore += 1; stats.totalShots += 1 }, onDecrement: { if game.ourScore > 0 { game.ourScore -= 1 }; if stats.totalShots > 0 { stats.totalShots -= 1 } })
+                            Spacer()
+                            StatButton(label: "Shots", value: $stats.totalShots)
+                            Spacer()
+                            StatButton(label: "Assists", value: $stats.assists)
+                        } else {
+//                            StatButton(label: "Goals", value: $stats.goals, onIncrement: { game.ourScore += 1; stats.totalShots += 1 }, onDecrement: { if game.ourScore > 0 { game.ourScore -= 1 }; if stats.totalShots > 0 { stats.totalShots -= 1 } })
+//                            StatButton(label: "Shots", value: $stats.totalShots)
+                            StatButton(label: "Assists", value: $stats.assists)
+                            Spacer()
+                            StatButton(label: "Saves", value: $stats.saves)
+                        }
                         Spacer()
                     }
                 }.padding(.vertical, 5)
@@ -640,10 +643,13 @@ struct GameSummaryView: View {
                                 Text("\(stats.name) (#\(stats.number))"); Spacer()
                                 Text("G:\(stats.goals) S:\(stats.totalShots) A:\(stats.assists) SV:\(stats.saves)").foregroundColor(.secondary)
                             }
+                            if stats.goals < 1 {
+                                
+                            }
                         }
                         if game.unknownGoals > 0 {
                             HStack {
-                                Text("Unknown").italic(); Spacer()
+                                Text("Unassigned").italic(); Spacer()
                                 Text("G:\(game.unknownGoals)").foregroundColor(.secondary)
                             }
                         }
@@ -902,6 +908,25 @@ struct EmptyPreviewView: View {
     }
 }
 
+// New preview: show the live GameTrackerView directly
+struct LiveGamePreviewView: View {
+    @StateObject private var managers = PreviewManagers(populated: true)
+
+    var body: some View {
+        // Create an active game using the preview roster so the tracker shows populated player stats
+        let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "Home Field", roster: managers.rosterManager.roster, durationInSeconds: 20 * 60)
+        activeGame.ourScore = 2
+        activeGame.opponentScore = 1
+        if activeGame.playerStats.indices.contains(8) { activeGame.playerStats[8].goals = 1 }
+        if activeGame.playerStats.indices.contains(0) { activeGame.playerStats[0].saves = 2 }
+
+        return GameTrackerView(game: activeGame)
+            .environmentObject(managers.gameManager)
+            .environmentObject(managers.historyManager)
+            .environmentObject(managers.rosterManager)
+    }
+}
+
 struct SoccerTrackerApp_Previews: PreviewProvider {
     static var previews: some View {
         Group {
@@ -909,13 +934,17 @@ struct SoccerTrackerApp_Previews: PreviewProvider {
                 .previewDisplayName("Populated — iPhone 16 Pro Max")
                 .previewDevice("iPhone 16 Pro Max")
 
-//            PopulatedPreviewView()
-//                .previewDisplayName("Populated — iPad Pro 11-inch (M4)")
-//                .previewDevice("iPad Pro 11-inch (M4)")
+            LiveGamePreviewView()
+                .previewDisplayName("Live Game — iPhone 16 Pro Max")
+                .previewDevice("iPhone 16 Pro Max")
 
             EmptyPreviewView()
                 .previewDisplayName("Empty — iPhone 16 Pro Max")
                 .previewDevice("iPhone 16 Pro Max")
+
+//            PopulatedPreviewView()
+//                .previewDisplayName("Populated — iPad Pro 11-inch (M4)")
+//                .previewDevice("iPad Pro 11-inch (M4)")
 
 //            EmptyPreviewView()
 //                .previewDisplayName("Empty — iPad Pro 11-inch (M4)")
