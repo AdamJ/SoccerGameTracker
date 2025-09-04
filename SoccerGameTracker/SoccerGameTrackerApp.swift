@@ -389,7 +389,7 @@ struct RosterView: View {
                         isEditingTeamName = true
                     }) {
                         Image(systemName: "pencil.circle")
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(AppColors.accent)
                     }
                 }
                 .padding(.top, 8)
@@ -424,7 +424,7 @@ struct RosterView: View {
                     if gameManager.isRosterLocked {
                         Section {
                             Text("Roster changes can be made at halftime or when the timer is paused.")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.secondary)
                         }
                     }
                     ForEach(Position.allCases, id: \ .self) { position in
@@ -438,7 +438,7 @@ struct RosterView: View {
                                             Text(player.name).font(.headline)
                                             Spacer()
                                             if !gameManager.isRosterLocked {
-                                                Image(systemName: "chevron.right").foregroundColor(.secondary)
+                                                Image(systemName: "chevron.right").foregroundColor(AppColors.secondary)
                                             }
                                         }
                                         .foregroundColor(.primary)
@@ -498,7 +498,7 @@ struct GameSetupView: View {
                         }
                     }
                     Button("Start Game") { startGame() }.disabled(opponentName.isEmpty || rosterManager.roster.isEmpty)
-                    if rosterManager.roster.isEmpty { Text("You must add at least one player to the roster before a game can be started.").foregroundColor(.red).font(.caption) }
+                    if rosterManager.roster.isEmpty { Text("You must add at least one player to the roster before a game can be started.").foregroundColor(AppColors.danger).font(.caption) }
                 }
                 .navigationTitle("Game Setup")
             }
@@ -541,7 +541,7 @@ struct GameTrackerView: View {
                     }
                     Spacer()
                     VStack {
-                         Text(game.currentHalf.rawValue).font(.subheadline).foregroundColor(.secondary)
+                         Text(game.currentHalf.rawValue).font(.subheadline).foregroundColor(AppColors.secondary)
                          Text(game.timeString()).font(.system(size: 32, weight: .bold, design: .monospaced))
                         Button(action: { game.isTimerRunning ? game.stopTimer() : game.startTimer() }) {
                             Image(systemName: game.isTimerRunning ? "stop.circle" : "timer").font(.largeTitle)
@@ -558,7 +558,7 @@ struct GameTrackerView: View {
                     }
                 }
             }
-            .padding().background(Color(.secondarySystemBackground)).cornerRadius(10).padding(.horizontal)
+            .padding().background(AppColors.lightBlue).cornerRadius(10).padding(.horizontal)
 
             // Player Stats List
             List(Array($game.playerStats.enumerated()), id: \.element.id) { index, $stats in
@@ -641,7 +641,7 @@ struct GameSummaryView: View {
                         ForEach(game.playerStats.filter { $0.goals > 0 || $0.assists > 0 || $0.saves > 0 || $0.totalShots > 0 }) { stats in
                             HStack {
                                 Text("\(stats.name) (#\(stats.number))"); Spacer()
-                                Text("G:\(stats.goals) S:\(stats.totalShots) A:\(stats.assists) SV:\(stats.saves)").foregroundColor(.secondary)
+                                Text("G:\(stats.goals) S:\(stats.totalShots) A:\(stats.assists) SV:\(stats.saves)").foregroundColor(AppColors.secondary)
                             }
                             if stats.goals < 1 {
                                 
@@ -650,7 +650,7 @@ struct GameSummaryView: View {
                         if game.unknownGoals > 0 {
                             HStack {
                                 Text("Unassigned").italic(); Spacer()
-                                Text("G:\(game.unknownGoals)").foregroundColor(.secondary)
+                                Text("G:\(game.unknownGoals)").foregroundColor(AppColors.secondary)
                             }
                         }
                     }
@@ -709,7 +709,7 @@ struct GameHistoryView: View {
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text("vs \(game.opponentName)").font(.headline)
-                                    Text(game.gameDate.formatted(date: .long, time: .shortened)).font(.caption).foregroundColor(.secondary)
+                                    Text(game.gameDate.formatted(date: .long, time: .shortened)).font(.caption).foregroundColor(AppColors.secondary)
                                 }
                                 Spacer()
                                 Text("\(game.ourScore) - \(game.opponentScore)").font(.title).bold()
