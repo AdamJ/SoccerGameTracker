@@ -379,52 +379,45 @@ struct RosterView: View {
     var body: some View {
         NavigationView {
             VStack {
-                // Team Name Edit Button
-                HStack {
-                    Text(rosterManager.homeTeamName)
-                        .font(.largeTitle)
-                        .bold()
-                    Button(action: {
-                        editedTeamName = rosterManager.homeTeamName
-                        isEditingTeamName = true
-                    }) {
-                        Image(systemName: "pencil.circle")
-                            .foregroundColor(AppColors.accent)
+                VStack {
+                    HStack {
+                        Text(rosterManager.homeTeamName)
+                            .font(.largeTitle)
+                            .bold()
+                            .foregroundStyle(AppColors.darkGreen)
                     }
-                }
-                .padding(.top, 8)
-                .sheet(isPresented: $isEditingTeamName) {
-                    NavigationView {
-                        Form {
-                            Section(header: Text("Edit Team Name")) {
-                                TextField("Team Name", text: $editedTeamName)
-                                    .autocapitalization(.words)
+                    .padding(.top, 8)
+                    .sheet(isPresented: $isEditingTeamName) {
+                        NavigationView {
+                            Form {
+                                Section(header: Text("Team Name")) {
+                                    TextField("Enter a Team Name", text: $editedTeamName)
+                                        .autocapitalization(.words)
+                                }
                             }
-                        }
-                        .navigationTitle("Team Name")
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarLeading) {
-                                Button("Cancel") { isEditingTeamName = false }
-                            }
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Save") {
-                                    let trimmed = editedTeamName.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    if !trimmed.isEmpty {
-                                        rosterManager.homeTeamName = trimmed
-                                    }
-                                    isEditingTeamName = false
-                                }.disabled(editedTeamName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            .navigationTitle("Edit Team Name")
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button("Cancel") { isEditingTeamName = false }
+                                }
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    Button("Save") {
+                                        let trimmed = editedTeamName.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        if !trimmed.isEmpty {
+                                            rosterManager.homeTeamName = trimmed
+                                        }
+                                        isEditingTeamName = false
+                                    }.disabled(editedTeamName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                }
                             }
                         }
                     }
                 }
-
                 List {
-                    
                     if gameManager.isRosterLocked {
                         Section {
                             Text("Roster changes can be made at halftime or when the timer is paused.")
-                                .foregroundColor(AppColors.secondary)
+                                .foregroundColor(AppColors.blue)
                         }
                     }
                     ForEach(Position.allCases, id: \ .self) { position in
@@ -438,7 +431,7 @@ struct RosterView: View {
                                             Text(player.name).font(.headline)
                                             Spacer()
                                             if !gameManager.isRosterLocked {
-                                                Image(systemName: "chevron.right").foregroundColor(AppColors.secondary)
+                                                Image(systemName: "chevron.right").foregroundColor(AppColors.blue)
                                             }
                                         }
                                         .foregroundColor(.primary)
@@ -449,9 +442,32 @@ struct RosterView: View {
                         }
                     }
                 }
+                .overlay {
+                    if rosterManager.roster.isEmpty {
+                        ContentUnavailableView {
+                            Label("No Players", systemImage: "person.slash")
+                        }
+                        description: {
+                            Text("There are no players currently on the roster.\nTap the + button to add players.")
+                        }
+                        .background(.clear)
+                    }
+                }
                 .navigationTitle("Team Roster")
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    Button(action: { isShowingAddPlayerSheet.toggle() }) { Image(systemName: "plus") }.disabled(gameManager.isRosterLocked)
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Button("Add Player", action: { isShowingAddPlayerSheet.toggle() })
+                                .disabled(gameManager.isRosterLocked)
+                            Button("Edit Team Name", action: {
+                                editedTeamName = rosterManager.homeTeamName
+                                isEditingTeamName = true
+                            })
+                        } label: {
+                            Label("Roster Options", systemImage: "slider.vertical.3")
+                        }
+                    }
                 }
                 .sheet(isPresented: $isShowingAddPlayerSheet) { AddPlayerView(rosterManager: rosterManager) }
                 .sheet(item: $playerToEdit) { player in
@@ -469,7 +485,7 @@ struct RosterView: View {
     }
 }
 
-// MARK: - GameSetupView
+// MARK: - GameSetupView - Pre-Game Setup
 struct GameSetupView: View {
     @EnvironmentObject var gameManager: GameManager
     @ObservedObject var rosterManager: RosterManager
@@ -477,7 +493,9 @@ struct GameSetupView: View {
     @State private var opponentName: String = ""
     @State private var location: String = ""
     @State private var gameDate: Date = Date()
-    @State private var selectedDurationIndex = 2 // Default to 20 minutes
+    @State private var selectedDurationIndex = 4
+    // Default to 20 minutes - each number equals a jump in 5 minutes, starting at 0
+    // Example 0 = 5 minutes, 2 = 15 minutes, 3 = 20 minutes, etc.
     
     let durationOptions = Array(stride(from: 5, through: 45, by: 5))
 
@@ -491,14 +509,22 @@ struct GameSetupView: View {
                         TextField("Opponent Name", text: $opponentName)
                         TextField("Location", text: $location)
                         DatePicker("Date and Time", selection: $gameDate)
-                    }
-                    Section(header: Text("Half Duration")) {
-                        Picker("Minutes", selection: $selectedDurationIndex) {
+                        Picker("Half Length", selection: $selectedDurationIndex) {
                             ForEach(0..<durationOptions.count, id: \.self) { index in Text("\(durationOptions[index]) minutes").tag(index) }
                         }
                     }
-                    Button("Start Game") { startGame() }.disabled(opponentName.isEmpty || rosterManager.roster.isEmpty)
-                    if rosterManager.roster.isEmpty { Text("You must add at least one player to the roster before a game can be started.").foregroundColor(AppColors.danger).font(.caption) }
+                    if rosterManager.roster.isEmpty {
+                        Section(header: Text("Game Actions")) {
+                            Text("You must add at least one player to the roster before a game can be started.").foregroundColor(AppColors.orange).font(.subheadline)
+                            Button("Start Game") { startGame() }.disabled(opponentName.isEmpty || rosterManager.roster.isEmpty)
+                        }
+                    } else {
+                        Section(header: Text("Game Actions")) {
+                            Button("Start Game") { startGame() }.disabled(opponentName.isEmpty || rosterManager.roster.isEmpty)
+                        }
+                    }
+//                    Button("Start Game") { startGame() }.disabled(opponentName.isEmpty || rosterManager.roster.isEmpty)
+//                    if rosterManager.roster.isEmpty { Text("You must add at least one player to the roster before a game can be started.").foregroundColor(AppColors.danger).font(.caption) }
                 }
                 .navigationTitle("Game Setup")
             }
@@ -513,6 +539,7 @@ struct GameSetupView: View {
 
 // MARK: - GameTrackerView - Live Game
 struct GameTrackerView: View {
+    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var rosterManager: RosterManager
     @StateObject var game: Game
     @State private var showingEndGameSheet = false
@@ -541,7 +568,7 @@ struct GameTrackerView: View {
                     }
                     Spacer()
                     VStack {
-                         Text(game.currentHalf.rawValue).font(.subheadline).foregroundColor(AppColors.secondary)
+                        Text(game.currentHalf.rawValue).font(.system(size: 14, weight: .bold, design: .default)).foregroundColor(AppColors.darkGreen)
                          Text(game.timeString()).font(.system(size: 32, weight: .bold, design: .monospaced))
                         Button(action: { game.isTimerRunning ? game.stopTimer() : game.startTimer() }) {
                             Image(systemName: game.isTimerRunning ? "stop.circle" : "timer").font(.largeTitle)
@@ -558,13 +585,12 @@ struct GameTrackerView: View {
                     }
                 }
             }
-            .padding().background(AppColors.lightBlue).cornerRadius(10).padding(.horizontal)
+            .padding().background(AppColors.coral).cornerRadius(16).padding(.horizontal)
 
-            // Player Stats List
             List(Array($game.playerStats.enumerated()), id: \.element.id) { index, $stats in
                 VStack(alignment: .leading) {
-                    Text("\(stats.name) (\(stats.number))").font(.headline)
-                    HStack(spacing: 15) {
+                    Text("\(stats.name) (\(stats.number))").font(.headline).foregroundColor(AppColors.primary).bold()
+                    HStack(spacing: 0) {
                         if stats.position != .goalkeeper {
                             StatButton(label: "Goals", value: $stats.goals, onIncrement: { game.ourScore += 1; stats.totalShots += 1 }, onDecrement: { if game.ourScore > 0 { game.ourScore -= 1 }; if stats.totalShots > 0 { stats.totalShots -= 1 } })
                             Spacer()
@@ -572,17 +598,36 @@ struct GameTrackerView: View {
                             Spacer()
                             StatButton(label: "Assists", value: $stats.assists)
                         } else {
-//                            StatButton(label: "Goals", value: $stats.goals, onIncrement: { game.ourScore += 1; stats.totalShots += 1 }, onDecrement: { if game.ourScore > 0 { game.ourScore -= 1 }; if stats.totalShots > 0 { stats.totalShots -= 1 } })
-//                            StatButton(label: "Shots", value: $stats.totalShots)
-                            StatButton(label: "Assists", value: $stats.assists)
-                            Spacer()
                             StatButton(label: "Saves", value: $stats.saves)
                         }
-                        Spacer()
                     }
-                }.padding(.vertical, 5)
+                }
+                .listRowBackground(colorScheme == .dark ? Color.black : Color.white.opacity(0.9))
             }
+            .scrollContentBackground(.hidden)
+//            .background {
+//                Image("SoccerField")
+//                    .resizable()
+////                    .scaledToFill()
+//                    .opacity(0.5)
+//                    .ignoresSafeArea()
+//            }
+//            .background(AppColors.fieldBackground.ignoresSafeArea().opacity(0.75))
+            .listStyle(.automatic)
+            .listRowSeparator(.hidden)
+            .listRowSpacing(4)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity) // Ensures the background fills the entire space
+        .background {
+            Image("SoccerField")
+                .resizable()
+//                    .scaledToFill()
+                .opacity(0.5)
+                .ignoresSafeArea()
+        }
+        .background(
+            LinearGradient(gradient: Gradient(colors: [.black, AppColors.fieldBackground]), startPoint: .top, endPoint: .bottom)
+        .ignoresSafeArea().opacity(0.95))
         .navigationTitle("Live Game").navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -641,7 +686,11 @@ struct GameSummaryView: View {
                         ForEach(game.playerStats.filter { $0.goals > 0 || $0.assists > 0 || $0.saves > 0 || $0.totalShots > 0 }) { stats in
                             HStack {
                                 Text("\(stats.name) (#\(stats.number))"); Spacer()
-                                Text("G:\(stats.goals) S:\(stats.totalShots) A:\(stats.assists) SV:\(stats.saves)").foregroundColor(AppColors.secondary)
+                                if stats.position != .goalkeeper {
+                                    Text("G:\(stats.goals) S:\(stats.totalShots) A:\(stats.assists)").foregroundColor(AppColors.blue)
+                                } else {
+                                    Text("SV:\(stats.saves)").foregroundColor(AppColors.blue)
+                                }
                             }
                             if stats.goals < 1 {
                                 
@@ -650,7 +699,7 @@ struct GameSummaryView: View {
                         if game.unknownGoals > 0 {
                             HStack {
                                 Text("Unassigned").italic(); Spacer()
-                                Text("G:\(game.unknownGoals)").foregroundColor(AppColors.secondary)
+                                Text("G:\(game.unknownGoals)").foregroundColor(AppColors.blue)
                             }
                         }
                     }
@@ -709,7 +758,7 @@ struct GameHistoryView: View {
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text("vs \(game.opponentName)").font(.headline)
-                                    Text(game.gameDate.formatted(date: .long, time: .shortened)).font(.caption).foregroundColor(AppColors.secondary)
+                                    Text(game.gameDate.formatted(date: .long, time: .shortened)).font(.caption).foregroundColor(AppColors.blue)
                                 }
                                 Spacer()
                                 Text("\(game.ourScore) - \(game.opponentScore)").font(.title).bold()
@@ -764,6 +813,8 @@ struct GameHistoryView: View {
 struct StatButton: View {
     let label: String
     @Binding var value: Int
+//    Set enabled for items with value greater than 0
+    var isEnabled: Bool { value > 0 }
     var onIncrement: (() -> Void)? = nil
     var onDecrement: (() -> Void)? = nil
     
@@ -771,9 +822,20 @@ struct StatButton: View {
         VStack {
             Text(label).font(.caption)
             HStack {
-                 Button { if value > 0 { value -= 1; onDecrement?() } } label: { Image(systemName: "minus.circle") }
+                Button {
+                    if value > 0 { value -= 1; onDecrement?() }
+                } label: {
+                    Image(systemName: "minus.circle")
+                }
+                .foregroundColor(isEnabled ? AppColors.danger : .gray)
+                .disabled(!isEnabled)
                 Text("\(value)").font(.headline).frame(width: 25)
-                Button { value += 1; onIncrement?() } label: { Image(systemName: "plus.circle") }
+                Button {
+                    value += 1; onIncrement?()
+                } label: {
+                    Image(systemName: "plus.circle")
+                }
+                .foregroundStyle(AppColors.darkBlue)
             }
         }.buttonStyle(BorderlessButtonStyle())
     }
@@ -831,14 +893,14 @@ final class PreviewManagers: ObservableObject {
             // 11-player roster
             rosterManager.roster = [
                 Player(name: "Alex Morgan", number: 1, position: .goalkeeper),
-                Player(name: "Ben Carter", number: 2, position: .defense),
+                Player(name: "Ben Carter", number: 24, position: .defense),
                 Player(name: "Carlos Vega", number: 3, position: .defense),
-                Player(name: "Diego Ramos", number: 4, position: .defense),
+                Player(name: "Diego Ramos", number: 40, position: .defense),
                 Player(name: "Ethan Park", number: 5, position: .defense),
-                Player(name: "Felix Hart", number: 6, position: .midfield),
+                Player(name: "Felix Hart", number: 62, position: .midfield),
                 Player(name: "George Li", number: 7, position: .midfield),
-                Player(name: "Hannah Kim", number: 8, position: .midfield),
-                Player(name: "Ivy Smith", number: 9, position: .midfield),
+                Player(name: "Hannah Kim", number: 88, position: .midfield),
+                Player(name: "Ivy Smith", number: 19, position: .midfield),
                 Player(name: "Jack Turner", number: 10, position: .attack),
                 Player(name: "Liam Young", number: 11, position: .attack),
                 Player(name: "Arnold Yount", number: 18, position: .substitute),
@@ -846,7 +908,7 @@ final class PreviewManagers: ObservableObject {
             rosterManager.homeTeamName = "TIGERS"
 
             // Active game for populated preview
-            let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "Home Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "United Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             activeGame.ourScore = 2
             activeGame.opponentScore = 1
             if activeGame.playerStats.indices.contains(8) { activeGame.playerStats[8].goals = 1 }
@@ -854,33 +916,34 @@ final class PreviewManagers: ObservableObject {
             gameManager.currentGame = activeGame
 
             // Multiple past games in history
-            let past1 = Game(opponentName: "Eagles", gameDate: Date().addingTimeInterval(-86400 * 3), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            let past1 = Game(opponentName: "Eagles", gameDate: Date().addingTimeInterval(-86400 * 3), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past1.ourScore = 3
             past1.opponentScore = 2
             if past1.playerStats.indices.contains(6) { past1.playerStats[6].goals = 2 }
             if past1.playerStats.indices.contains(5) { past1.playerStats[5].assists = 1 }
 
-            let past2 = Game(opponentName: "Lions", gameDate: Date().addingTimeInterval(-86400 * 10), location: "Home Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            let past2 = Game(opponentName: "Lions", gameDate: Date().addingTimeInterval(-86400 * 10), location: "United Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past2.ourScore = 1
             past2.opponentScore = 1
             if past2.playerStats.indices.contains(2) { past2.playerStats[2].saves = 1 }
 
-            let past3 = Game(opponentName: "Panthers", gameDate: Date().addingTimeInterval(-86400 * 30), location: "Neutral", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            let past3 = Game(opponentName: "Panthers", gameDate: Date().addingTimeInterval(-86400 * 30), location: "Neutral", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past3.ourScore = 0
             past3.opponentScore = 2
             if past3.playerStats.indices.contains(0) { past3.playerStats[0].saves = 4 }
 
-            let past4 = Game(opponentName: "Wolves", gameDate: Date().addingTimeInterval(-86400 * 60), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 20 * 60)
+            let past4 = Game(opponentName: "Wolves", gameDate: Date().addingTimeInterval(-86400 * 60), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past4.ourScore = 4
             past4.opponentScore = 0
             if past4.playerStats.indices.contains(9) { past4.playerStats[9].goals = 2 }
             if past4.playerStats.indices.contains(10) { past4.playerStats[10].assists = 1 }
+            if past4.playerStats.indices.contains(0) { past4.playerStats[0].saves = 1 }
 
             historyManager.gameHistory = [past1, past2, past3, past4]
         } else {
             // Empty / fresh install
             rosterManager.roster = []
-            rosterManager.homeTeamName = "HOME"
+            rosterManager.homeTeamName = "United"
             historyManager.gameHistory = []
         }
 
@@ -914,13 +977,24 @@ struct LiveGamePreviewView: View {
 
     var body: some View {
         // Create an active game using the preview roster so the tracker shows populated player stats
-        let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "Home Field", roster: managers.rosterManager.roster, durationInSeconds: 20 * 60)
+        let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "Home Field", roster: managers.rosterManager.roster, durationInSeconds: 25 * 60)
         activeGame.ourScore = 2
         activeGame.opponentScore = 1
         if activeGame.playerStats.indices.contains(8) { activeGame.playerStats[8].goals = 1 }
         if activeGame.playerStats.indices.contains(0) { activeGame.playerStats[0].saves = 2 }
 
         return GameTrackerView(game: activeGame)
+            .environmentObject(managers.gameManager)
+            .environmentObject(managers.historyManager)
+            .environmentObject(managers.rosterManager)
+    }
+}
+
+// Preview: show the GameHistoryView directly
+struct GameHistoryPreviewView: View {
+    @StateObject private var managers = PreviewManagers(populated: true)
+    var body: some View {
+        GameHistoryView()
             .environmentObject(managers.gameManager)
             .environmentObject(managers.historyManager)
             .environmentObject(managers.rosterManager)
@@ -942,10 +1016,12 @@ struct SoccerTrackerApp_Previews: PreviewProvider {
                 .previewDisplayName("Empty — iPhone 16 Pro Max")
                 .previewDevice("iPhone 16 Pro Max")
 
+            GameHistoryPreviewView()
+                .previewDisplayName("Game History — iPhone 16 Pro Max")
+                .previewDevice("iPhone 16 Pro Max")
 //            PopulatedPreviewView()
 //                .previewDisplayName("Populated — iPad Pro 11-inch (M4)")
 //                .previewDevice("iPad Pro 11-inch (M4)")
-
 //            EmptyPreviewView()
 //                .previewDisplayName("Empty — iPad Pro 11-inch (M4)")
 //                .previewDevice("iPad Pro 11-inch (M4)")

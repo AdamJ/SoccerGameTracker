@@ -7,13 +7,16 @@ import SwiftUI
 ///   AppColors.primary
 ///
 struct AppColors {
-    static let darkBlue = Color(asset: "DarkBlueColor")
-    static let secondary = Color(asset: "SecondaryColor")
+    static let darkBlue = Color(asset: "AppDarkBlueColor")
+    static let blue = Color(asset: "AppSecondaryColor")
     static let accent = Color(asset: "AccentColor")
-    static let danger = Color(asset: "DangerColor")
-    static let darkGreen = Color(asset: "DarkGreenColor")
-    static let lightBlue = Color(asset: "LightBlueColor")
-    static let orange = Color(asset: "OrangeColor")
+    static let danger = Color(asset: "AppDangerColor")
+    static let darkGreen = Color(asset: "AppDarkGreenColor")
+    static let primary = Color(asset: "AppDarkGreenColor")
+    static let coral = Color(asset: "AppCoralColor")
+    static let orange = Color(asset: "AppOrangeColor")
+    static let onAccent = Color("AppCoralColor").opacity(0.5)
+    static let fieldBackground = Color("FieldBackgroundColor")
 }
 
 extension Color {
