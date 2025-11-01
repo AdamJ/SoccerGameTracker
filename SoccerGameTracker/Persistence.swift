@@ -10,20 +10,16 @@ import CoreData
 struct PersistenceController {
     static let shared = PersistenceController()
 
-    @MainActor
-    static let preview: PersistenceController = {
+    static var preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
-        for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-        }
+        // Add any preview data here if needed
         do {
             try viewContext.save()
         } catch {
-            // Production error handling: log the error instead of crashing.
+            // Replace this implementation with code to handle the error appropriately.
             let nsError = error as NSError
-            print("Core Data preview save error: \(nsError), \(nsError.userInfo)")
+            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
         }
         return result
     }()
@@ -37,11 +33,26 @@ struct PersistenceController {
         }
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
-                // Production error handling: log the error instead of crashing.
-                print("Unresolved Core Data error: \(error), \(error.userInfo)")
-                // Optionally, you could notify the user or take other action here.
+                // Replace this implementation with code to handle the error appropriately.
+                fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         })
         container.viewContext.automaticallyMergesChangesFromParent = true
+    }
+}
+
+// MARK: - Save context
+extension PersistenceController {
+    func save() {
+        let context = container.viewContext
+
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
     }
 }
