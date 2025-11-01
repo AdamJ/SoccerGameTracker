@@ -12,6 +12,7 @@ struct AppColors {
     static let accent = Color(asset: "AccentColor")
     static let danger = Color(asset: "AppDangerColor")
     static let darkGreen = Color(asset: "AppDarkGreenColor")
+    /// 'primary' uses the same color as 'darkGreen'. Change if a different primary is desired.
     static let primary = Color(asset: "AppDarkGreenColor")
     static let coral = Color(asset: "AppCoralColor")
     static let orange = Color(asset: "AppOrangeColor")
