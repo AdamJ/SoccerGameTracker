@@ -6,7 +6,7 @@ struct GameSummaryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Game Info Section
+                // TODO: Update Game Info Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Game Summary")
                         .font(.largeTitle)
@@ -22,7 +22,7 @@ struct GameSummaryView: View {
                 }
                 .padding()
                 
-                // Score Section
+                // TODO: Update Score Section
                 HStack {
                     Text("Final Score:")
                         .font(.headline)

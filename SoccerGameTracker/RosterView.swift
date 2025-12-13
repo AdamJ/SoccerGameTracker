@@ -46,7 +46,7 @@ struct PlayerRowView: View {
             }
             
             Spacer()
-            
+            // MARK: - Add ability to edit player details
             Text("#\(player.number)")
                 .font(.title2)
                 .fontWeight(.bold)

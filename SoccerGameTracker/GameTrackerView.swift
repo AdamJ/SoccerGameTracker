@@ -51,7 +51,7 @@ struct GameTrackerView: View {
                 showingGameSummary = true
             }
         } message: {
-            Text("First half completed. The second half timer is ready to start.")
+            Text("First half completed. The second half is ready to start.")
         }
         .onChange(of: game.remainingSeconds) { newValue in
             if newValue == 0 && game.currentHalf == .first {
@@ -98,10 +98,13 @@ struct GameTrackerView: View {
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.primary)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Home team score: \(game.ourScore)")
                 
                 Text(":")
                     .font(.system(size: 32, weight: .light))
                     .foregroundColor(.secondary)
+                    .accessibilityHidden(true)
                 
                 // Away team score
                 VStack(spacing: 4) {
@@ -110,13 +113,18 @@ struct GameTrackerView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .minimumScaleFactor(0.5)
                     Text("\(game.opponentScore)")
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.coral)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(game.opponentName) score: \(game.opponentScore)")
             }
             .padding(.vertical, 8)
+        }
+        .padding(.bottom, 16)
+        .background(Color(.systemGray6))
         }
         .padding(.bottom, 16)
         .background(Color(.systemGray6))
@@ -128,6 +136,8 @@ struct GameTrackerView: View {
             Text(game.timeString())
                 .font(.system(size: 36, weight: .bold, design: .monospaced))
                 .foregroundColor(game.isTimerRunning ? AppColors.primary : .secondary)
+                .accessibilityLabel("Time remaining: \(game.timeString())")
+                .accessibilityAddTraits(.updatesFrequently)
             
             // Timer controls
             HStack(spacing: 12) {
@@ -141,6 +151,7 @@ struct GameTrackerView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(game.isTimerRunning ? AppColors.orange : AppColors.primary)
                 .font(.headline)
+                .accessibilityLabel(game.isTimerRunning ? "Pause timer" : "Start timer")
                 
                 // End Half button - always available during first half
                 if game.currentHalf == .first {
@@ -151,6 +162,7 @@ struct GameTrackerView: View {
                     }
                     .buttonStyle(.bordered)
                     .foregroundColor(AppColors.primary)
+                    .accessibilityLabel("End first half")
                 } else if game.currentHalf == .second {
                     // End Game button - available during second half
                     Button("End Game") {
@@ -159,6 +171,7 @@ struct GameTrackerView: View {
                     }
                     .buttonStyle(.bordered)
                     .foregroundColor(AppColors.danger)
+                    .accessibilityLabel("End game")
                 }
                 
                 Button("Summary") {
@@ -166,6 +179,7 @@ struct GameTrackerView: View {
                 }
                 .buttonStyle(.bordered)
                 .foregroundColor(AppColors.darkBlue)
+                .accessibilityLabel("View game summary")
             }
         }
         .padding()
@@ -186,7 +200,7 @@ struct GameTrackerView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "soccerball")
                             .font(.title2)
-                        Text("Our Goal")
+                        Text("Team Goal")
                             .font(.caption)
                     }
                 }
@@ -200,7 +214,7 @@ struct GameTrackerView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "minus.circle")
                             .font(.title2)
-                        Text("Remove Goal")
+                        Text("Remove Team Goal")
                             .font(.caption)
                     }
                 }
@@ -218,7 +232,7 @@ struct GameTrackerView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "soccerball.inverse")
                             .font(.title2)
-                        Text("Opp Goal")
+                        Text("Opponent Goal")
                             .font(.caption)
                     }
                 }
@@ -232,7 +246,7 @@ struct GameTrackerView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "minus.circle.fill")
                             .font(.title2)
-                        Text("Remove Opp Goal")
+                        Text("Subtract Opponent Goal")
                             .font(.caption)
                     }
                 }
@@ -254,7 +268,7 @@ struct GameTrackerView: View {
                 
                 Spacer()
                 
-                Text("Tap for details")
+                Text("Tap row for details")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -314,24 +328,30 @@ struct PlayerStatRow: View {
                 HStack(spacing: 12) {
                     if playerStats.goals > 0 {
                         StatBadge(icon: "soccerball", value: playerStats.goals, color: AppColors.primary)
+                            .accessibilityLabel("\(playerStats.goals) goals")
                     }
                     if playerStats.assists > 0 {
                         StatBadge(icon: "hand.thumbsup", value: playerStats.assists, color: AppColors.darkBlue)
+                            .accessibilityLabel("\(playerStats.assists) assists")
                     }
                     if playerStats.yellowCards > 0 {
-                        StatBadge(icon: "rectangle", value: playerStats.yellowCards, color: .yellow)
+                        StatBadge(icon: "rectangle", value: playerStats.yellowCards, color: AppColors.orange)
+                            .accessibilityLabel("\(playerStats.yellowCards) yellow cards")
                     }
                     if playerStats.redCards > 0 {
                         StatBadge(icon: "rectangle.fill", value: playerStats.redCards, color: AppColors.danger)
+                            .accessibilityLabel("\(playerStats.redCards) red cards")
                     }
                     if playerStats.saves > 0 {
                         StatBadge(icon: "hand.raised", value: playerStats.saves, color: AppColors.darkGreen)
+                            .accessibilityLabel("\(playerStats.saves) saves")
                     }
                 }
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
@@ -357,7 +377,7 @@ struct StatBadge: View {
         .foregroundColor(color)
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-        .background(color.opacity(0.1))
+        .background(color.opacity(0.15))
         .cornerRadius(4)
     }
 }
@@ -463,7 +483,7 @@ struct GoalAssignmentView: View {
                                     Text("Unknown Player")
                                         .font(.headline)
                                         .foregroundColor(.primary)
-                                    Text("Goal scorer not identified")
+                                    Text("No goal scorer selected")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -709,7 +729,7 @@ struct OpponentGoalRemovalView: View {
                             .font(.system(size: 50))
                             .foregroundColor(AppColors.orange)
                         
-                        Text("No Opponent Goals to Remove")
+                        Text("No Goals to Remove")
                             .font(.title2)
                             .fontWeight(.semibold)
                         
@@ -720,7 +740,7 @@ struct OpponentGoalRemovalView: View {
                     }
                     .padding()
                 } else {
-                    Text("Remove a goal from \(game.opponentName)?")
+                    Text("Subtract a goal from \(game.opponentName)?")
                         .font(.title2)
                         .fontWeight(.semibold)
                         .multilineTextAlignment(.center)
@@ -729,7 +749,7 @@ struct OpponentGoalRemovalView: View {
                     VStack(spacing: 20) {
                         // Current opponent score display
                         VStack(spacing: 8) {
-                            Text("Current Score")
+                            Text("Score")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
@@ -750,7 +770,7 @@ struct OpponentGoalRemovalView: View {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.title2)
                                 
-                                Text("Remove 1 Goal")
+                                Text("Undo Goal")
                                     .font(.headline)
                             }
                             .foregroundColor(.white)
