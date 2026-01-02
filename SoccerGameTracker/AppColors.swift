@@ -1,23 +1,27 @@
 import SwiftUI
 
-/// Utility for loading colors from the asset catalog with cross-platform fallbacks.
-///
-/// Usage examples:
-///   Color(asset: "PrimaryColor")
-///   AppColors.primary
-///
+/// Legacy color utility - bridged to semantic colors for backward compatibility
+/// New code should use SemanticColors directly
 struct AppColors {
-    static let darkBlue = Color(asset: "AppDarkBlueColor")
-    static let blue = Color(asset: "AppSecondaryColor")
-    static let accent = Color(asset: "AccentColor")
-    static let danger = Color(asset: "AppDangerColor")
-    static let darkGreen = Color(asset: "AppDarkGreenColor")
-    /// 'primary' uses the same color as 'darkGreen'. Change if a different primary is desired.
-    static let primary = Color(asset: "AppDarkGreenColor")
-    static let coral = Color(asset: "AppCoralColor")
-    static let orange = Color(asset: "AppOrangeColor")
-    static let onAccent = Color(asset: "AppCoralColor").opacity(0.5)
-    static let fieldBackground = Color(asset: "FieldBackgroundColor")
+    // Primary colors mapped to semantic system
+    static let primary = SemanticColors.primary
+    static let darkGreen = SemanticColors.success
+
+    // Secondary colors
+    static let darkBlue = SemanticColors.secondary
+    static let blue = SemanticColors.info
+
+    // Status colors
+    static let danger = SemanticColors.error
+    static let orange = SemanticColors.warning
+
+    // Accent colors
+    static let accent = SemanticColors.accent
+    static let coral = SemanticColors.accentVariant
+    static let onAccent = SemanticColors.accent.opacity(0.5)
+
+    // Surface colors
+    static let fieldBackground = SemanticColors.surfaceVariant
 }
 
 extension Color {

@@ -1,108 +1,119 @@
 import SwiftUI
 
 struct EndGameConfirmationView: View {
-    let ourScore: Int
-    let opponentScore: Int
-    let onConfirm: () -> Void
-    let onCancel: () -> Void
-    
+    let game: Game
+    let onComplete: () -> Void
+
     @Environment(\.dismiss) private var dismiss
-    
+    @State private var showingShareSheet = false
+
+    private var gameSummaryText: String {
+        var summary = "⚽️ Game Summary\n\n"
+        summary += "📅 Date: \(game.gameDate.formatted(date: .abbreviated, time: .omitted))\n"
+        summary += "📍 Location: \(game.location)\n"
+        summary += "🆚 Opponent: \(game.opponentName)\n\n"
+        summary += "Final Score: \(game.ourScore) - \(game.opponentScore)\n"
+        summary += game.ourScore > game.opponentScore ? "✅ Win\n\n" : game.ourScore < game.opponentScore ? "❌ Loss\n\n" : "🤝 Draw\n\n"
+
+        // Player stats
+        let playersWithStats = game.playerStats.filter {
+            $0.goals > 0 || $0.assists > 0 || $0.saves > 0 || $0.totalShots > 0
+        }
+
+        if !playersWithStats.isEmpty {
+            summary += "👥 Player Stats:\n"
+            for stats in playersWithStats.sorted(by: { $0.number < $1.number }) {
+                summary += "#\(stats.number) \(stats.name)"
+                var statParts: [String] = []
+                if stats.goals > 0 { statParts.append("\(stats.goals)G") }
+                if stats.assists > 0 { statParts.append("\(stats.assists)A") }
+                if stats.saves > 0 { statParts.append("\(stats.saves)SV") }
+                if stats.totalShots > 0 { statParts.append("\(stats.totalShots)SH") }
+                if !statParts.isEmpty {
+                    summary += " - " + statParts.joined(separator: ", ")
+                }
+                summary += "\n"
+            }
+        }
+
+        return summary
+    }
+
     var body: some View {
         NavigationView {
-            VStack(spacing: 30) {
+            VStack(spacing: DesignTokens.Spacing.xxl) {
                 Spacer()
-                
+
                 // Icon
                 Image(systemName: "flag.checkered")
                     .font(.system(size: 70))
-                    .foregroundColor(AppColors.primary)
-                
+                    .foregroundColor(SemanticColors.primary)
+
                 // Title
                 Text("End Game")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                
+
                 // Final Score Display
-                VStack(spacing: 12) {
-                    Text("Final Score")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
-                    HStack(spacing: 20) {
-                        VStack(spacing: 4) {
-                            Text("HOME")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.secondary)
-                            Text("\(ourScore)")
-                                .font(.system(size: 50, weight: .bold, design: .rounded))
-                                .foregroundColor(AppColors.primary)
-                        }
-                        
-                        Text(":")
-                            .font(.system(size: 32, weight: .light))
-                            .foregroundColor(.secondary)
-                        
-                        VStack(spacing: 4) {
-                            Text("AWAY")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.secondary)
-                            Text("\(opponentScore)")
-                                .font(.system(size: 50, weight: .bold, design: .rounded))
-                                .foregroundColor(AppColors.coral)
-                        }
-                    }
-                }
+                ScoreDisplay(
+                    homeScore: game.ourScore,
+                    opponentScore: game.opponentScore,
+                    opponentName: game.opponentName
+                )
                 .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(16)
-                
-                Text("Are you sure you want to end this game?")
+                .cardStyle(backgroundColor: SemanticColors.surfaceVariant)
+
+                Text("Share the game summary or finish")
                     .font(.body)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                
+
                 Spacer()
-                
+
                 // Action Buttons
-                VStack(spacing: 12) {
+                VStack(spacing: DesignTokens.Spacing.md) {
                     Button {
-                        onConfirm()
-                        dismiss()
+                        showingShareSheet = true
                     } label: {
-                        Text("Confirm")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                            Text("Share & End Game")
+                        }
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(AppColors.danger)
-                    
+                    .buttonStyle(PrimaryButtonStyle(backgroundColor: SemanticColors.primary))
+
                     Button {
-                        onCancel()
+                        // End game without sharing
                         dismiss()
+                        onComplete()
                     } label: {
-                        Text("Cancel")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
+                        HStack {
+                            Image(systemName: "checkmark")
+                            Text("End Game")
+                        }
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(SecondaryButtonStyle(
+                        borderColor: SemanticColors.primary,
+                        foregroundColor: SemanticColors.primary
+                    ))
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 30)
+                .padding(.bottom, DesignTokens.Spacing.xxl)
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        onCancel()
-                        dismiss()
-                    }
-                }
+            .sheet(isPresented: $showingShareSheet, onDismiss: {
+                // After share sheet is dismissed, complete the game ending process
+                dismiss()
+                onComplete()
+            }) {
+                ShareSheet(items: [gameSummaryText])
             }
         }
     }
@@ -111,11 +122,20 @@ struct EndGameConfirmationView: View {
 #if DEBUG
 struct EndGameConfirmationView_Previews: PreviewProvider {
     static var previews: some View {
-        EndGameConfirmationView(
-            ourScore: 3,
-            opponentScore: 2,
-            onConfirm: {},
-            onCancel: {}
+        let managers = PreviewManagers(populated: true)
+        let game = Game(
+            opponentName: "Rivals",
+            gameDate: Date(),
+            location: "Home Field",
+            roster: managers.rosterManager.roster,
+            durationInSeconds: 25 * 60
+        )
+        game.ourScore = 3
+        game.opponentScore = 2
+
+        return EndGameConfirmationView(
+            game: game,
+            onComplete: {}
         )
     }
 }

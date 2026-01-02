@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GameTrackerView: View {
     @ObservedObject var game: Game
+    @EnvironmentObject var gameManager: GameManager
     @State private var selectedPlayerForStats: PlayerStats?
     @State private var showingPlayerStatsModal = false
     @State private var showingGameSummary = false
@@ -46,15 +47,9 @@ struct GameTrackerView: View {
         }
         .sheet(isPresented: $showingEndGameConfirmation) {
             EndGameConfirmationView(
-                ourScore: game.ourScore,
-                opponentScore: game.opponentScore,
-                onConfirm: {
-                    showingEndGameConfirmation = false
-                    showingGameSummary = true
-                },
-                onCancel: {
-                    showingEndGameConfirmation = false
-                    game.startTimer()
+                game: game,
+                onComplete: {
+                    gameManager.endGame()
                 }
             )
         }
@@ -398,68 +393,83 @@ struct PlayerStatsDetailView: View {
     @ObservedObject var playerStats: PlayerStats
     @ObservedObject var game: Game
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                // Player header
-                VStack(spacing: 8) {
-                    Text("#\(playerStats.number)")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundColor(AppColors.primary)
-                    
-                    Text(playerStats.name)
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
-                    Text(playerStats.position.displayName)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                }
-                .padding()
-                
-                // Stats grid
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-                    StatButton(label: "Goals", value: $playerStats.goals) {
-                        game.ourScore += 1
-                    } onDecrement: {
-                        if game.ourScore > 0 { game.ourScore -= 1 }
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.xl) {
+                    // Player header
+                    VStack(spacing: DesignTokens.Spacing.sm) {
+                        Text("#\(playerStats.number)")
+                            .font(.system(size: DesignTokens.FontSize.display, weight: .bold, design: .rounded))
+                            .foregroundColor(SemanticColors.primary)
+
+                        Text(playerStats.name)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(SemanticColors.textPrimary)
+
+                        Text(playerStats.position.displayName)
+                            .font(.subheadline)
+                            .foregroundColor(SemanticColors.textSecondary)
+                            .badgeStyle(color: SemanticColors.primary, size: .medium)
                     }
-                    
-                    StatButton(label: "Assists", value: $playerStats.assists)
-                    
-                    StatButton(label: "Yellow Cards", value: $playerStats.yellowCards)
-                    
-                    StatButton(label: "Red Cards", value: $playerStats.redCards)
-                    
-                    if playerStats.position == .goalkeeper {
-                        StatButton(label: "Saves", value: $playerStats.saves)
+                    .padding(.top, DesignTokens.Spacing.lg)
+
+                    // Stats grid - Always show all stats with 0 values for empty stats
+                    VStack(spacing: DesignTokens.Spacing.lg) {
+                        // First row - Goals and Assists
+                        HStack(spacing: DesignTokens.Spacing.lg) {
+                            StatButton(label: "Goals", value: $playerStats.goals) {
+                                game.ourScore += 1
+                            } onDecrement: {
+                                if game.ourScore > 0 { game.ourScore -= 1 }
+                            }
+
+                            StatButton(label: "Assists", value: $playerStats.assists)
+                        }
+
+                        // Second row - Shots and Saves (Saves only for GK)
+                        HStack(spacing: DesignTokens.Spacing.lg) {
+                            StatButton(label: "Shots", value: $playerStats.totalShots)
+
+                            if playerStats.position == .goalkeeper {
+                                StatButton(label: "Saves", value: $playerStats.saves)
+                            } else {
+                                // Placeholder to keep grid aligned
+                                Color.clear
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+
+                        // Third row - Yellow and Red Cards
+                        HStack(spacing: DesignTokens.Spacing.lg) {
+                            StatButton(label: "Yellow Cards", value: $playerStats.yellowCards)
+
+                            StatButton(label: "Red Cards", value: $playerStats.redCards)
+                        }
                     }
-                    
-                    StatButton(label: "Shots", value: $playerStats.totalShots)
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
+
+                    // Substitution toggle
+                    Toggle("Substituted", isOn: $playerStats.isSubstituted)
+                        .padding(.horizontal, DesignTokens.Spacing.lg)
+                        .padding(.vertical, DesignTokens.Spacing.md)
                 }
-                .padding(.horizontal)
-                
-                // Substitution toggle
-                Toggle("Substituted", isOn: $playerStats.isSubstituted)
-                    .padding(.horizontal)
-                
-                Spacer()
+                .padding(.bottom, DesignTokens.Spacing.xl)
             }
             .navigationTitle("Player Stats")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(SemanticColors.primary)
                 }
             }
         }
+        .presentationDragIndicator(.visible)
     }
 }
 

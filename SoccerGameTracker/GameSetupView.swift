@@ -35,6 +35,7 @@ struct GameSetupView: View {
             if let game = gameManager.currentGame {
                 NavigationView {
                     GameTrackerView(game: game)
+                        .environmentObject(gameManager)
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .navigationBarTrailing) {
@@ -45,20 +46,24 @@ struct GameSetupView: View {
                             }
                         }
                         .sheet(isPresented: $showingEndGameConfirmation) {
-                            EndGameConfirmationView(
-                                ourScore: gameManager.currentGame?.ourScore ?? 0,
-                                opponentScore: gameManager.currentGame?.opponentScore ?? 0,
-                                onConfirm: {
-                                    showingEndGameConfirmation = false
-                                    showingGameTracker = false
-                                    gameManager.endGame()
-                                },
-                                onCancel: {
-                                    showingEndGameConfirmation = false
-                                }
-                            )
+                            if let game = gameManager.currentGame {
+                                EndGameConfirmationView(
+                                    game: game,
+                                    onComplete: {
+                                        gameManager.endGame()
+                                        showingEndGameConfirmation = false
+                                        showingGameTracker = false
+                                    }
+                                )
+                            }
                         }
                 }
+            }
+        }
+        .onChange(of: gameManager.isGameActive) { isActive in
+            // Automatically dismiss the tracker when game ends
+            if !isActive {
+                showingGameTracker = false
             }
         }
     }
