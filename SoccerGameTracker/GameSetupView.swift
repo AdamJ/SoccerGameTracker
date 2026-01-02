@@ -13,6 +13,7 @@ struct GameSetupView: View {
     @State private var showingGameTracker = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var showingEndGameConfirmation = false
     
     private let halfDurationOptions = [20, 25, 30, 35, 40, 45, 50]
     
@@ -38,11 +39,24 @@ struct GameSetupView: View {
                         .toolbar {
                             ToolbarItem(placement: .navigationBarTrailing) {
                                 Button("End Game") {
-                                    gameManager.endGame()
-                                    showingGameTracker = false
+                                    showingEndGameConfirmation = true
                                 }
                                 .foregroundColor(AppColors.danger)
                             }
+                        }
+                        .sheet(isPresented: $showingEndGameConfirmation) {
+                            EndGameConfirmationView(
+                                ourScore: gameManager.currentGame?.ourScore ?? 0,
+                                opponentScore: gameManager.currentGame?.opponentScore ?? 0,
+                                onConfirm: {
+                                    showingEndGameConfirmation = false
+                                    showingGameTracker = false
+                                    gameManager.endGame()
+                                },
+                                onCancel: {
+                                    showingEndGameConfirmation = false
+                                }
+                            )
                         }
                 }
             }
@@ -232,6 +246,7 @@ struct PlayerSelectionRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(player.name)
                             .fontWeight(.medium)
+                            .foregroundColor(.primary)
                         Text("#\(player.number) • \(player.position.displayName)")
                             .font(.caption)
                             .foregroundColor(.secondary)

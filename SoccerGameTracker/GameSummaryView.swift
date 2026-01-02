@@ -32,7 +32,7 @@ struct GameSummaryView: View {
                         .fontWeight(.bold)
                 }
                 .padding()
-                .background(Color.gray.opacity(0.1))
+                .background(Color(.systemGray6))
                 .cornerRadius(8)
                 
                 // Player Stats Section

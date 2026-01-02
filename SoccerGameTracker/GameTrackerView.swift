@@ -9,6 +9,7 @@ struct GameTrackerView: View {
     @State private var showingGoalAssignmentModal = false
     @State private var showingGoalRemovalModal = false
     @State private var showingOpponentGoalRemovalModal = false
+    @State private var showingEndGameConfirmation = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -42,6 +43,20 @@ struct GameTrackerView: View {
         }
         .sheet(isPresented: $showingOpponentGoalRemovalModal) {
             OpponentGoalRemovalView(game: game)
+        }
+        .sheet(isPresented: $showingEndGameConfirmation) {
+            EndGameConfirmationView(
+                ourScore: game.ourScore,
+                opponentScore: game.opponentScore,
+                onConfirm: {
+                    showingEndGameConfirmation = false
+                    showingGameSummary = true
+                },
+                onCancel: {
+                    showingEndGameConfirmation = false
+                    game.startTimer()
+                }
+            )
         }
         .alert("Half Time", isPresented: $showingHalfTimeAlert) {
             Button("Start Second Half") {
@@ -125,9 +140,6 @@ struct GameTrackerView: View {
         }
         .padding(.bottom, 16)
         .background(Color(.systemGray6))
-        }
-        .padding(.bottom, 16)
-        .background(Color(.systemGray6))
     }
     
     private var timerSection: some View {
@@ -167,7 +179,7 @@ struct GameTrackerView: View {
                     // End Game button - available during second half
                     Button("End Game") {
                         game.stopTimer()
-                        showingGameSummary = true
+                        showingEndGameConfirmation = true
                     }
                     .buttonStyle(.bordered)
                     .foregroundColor(AppColors.danger)
@@ -236,8 +248,8 @@ struct GameTrackerView: View {
                             .font(.caption)
                     }
                 }
-                .buttonStyle(.bordered)
-                .foregroundColor(AppColors.coral)
+                .buttonStyle(.borderedProminent)
+                .tint(AppColors.coral)
                 
                 // Remove opponent goal button
                 Button {

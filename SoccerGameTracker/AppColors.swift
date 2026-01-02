@@ -16,8 +16,8 @@ struct AppColors {
     static let primary = Color(asset: "AppDarkGreenColor")
     static let coral = Color(asset: "AppCoralColor")
     static let orange = Color(asset: "AppOrangeColor")
-    static let onAccent = Color("AppCoralColor").opacity(0.5)
-    static let fieldBackground = Color("FieldBackgroundColor")
+    static let onAccent = Color(asset: "AppCoralColor").opacity(0.5)
+    static let fieldBackground = Color(asset: "FieldBackgroundColor")
 }
 
 extension Color {

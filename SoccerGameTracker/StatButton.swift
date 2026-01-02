@@ -17,16 +17,16 @@ struct StatButton: View {
 
     var body: some View {
         VStack {
-            Text(label).font(.caption)
+            Text(label).font(.caption).foregroundColor(.primary)
             HStack {
                 Button {
                     if value > 0 { value -= 1; onDecrement?() }
                 } label: {
                     Image(systemName: "minus.circle")
                 }
-                .foregroundColor(isEnabled ? AppColors.danger : .gray)
+                .foregroundColor(isEnabled ? AppColors.danger : Color(.systemGray3))
                 .disabled(!isEnabled)
-                Text("\(value)").font(.headline).frame(width: 25)
+                Text("\(value)").font(.headline).frame(width: 25).foregroundColor(.primary)
                 Button {
                     value += 1; onIncrement?()
                 } label: {
