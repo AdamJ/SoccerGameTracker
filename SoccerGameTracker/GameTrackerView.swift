@@ -4,7 +4,6 @@ struct GameTrackerView: View {
     @ObservedObject var game: Game
     @EnvironmentObject var gameManager: GameManager
     @State private var selectedPlayerForStats: PlayerStats?
-    @State private var showingPlayerStatsModal = false
     @State private var showingGameSummary = false
     @State private var showingHalfTimeAlert = false
     @State private var showingGoalAssignmentModal = false
@@ -29,10 +28,8 @@ struct GameTrackerView: View {
         }
         .navigationTitle("Live Game")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showingPlayerStatsModal) {
-            if let player = selectedPlayerForStats {
-                PlayerStatsDetailView(playerStats: player, game: game)
-            }
+        .sheet(item: $selectedPlayerForStats) { player in
+            PlayerStatsDetailView(playerStats: player, game: game)
         }
         .sheet(isPresented: $showingGameSummary) {
             GameSummaryView(game: game)
@@ -313,7 +310,6 @@ struct GameTrackerView: View {
                     ForEach(game.playerStats.sorted(by: { $0.number < $1.number })) { playerStats in
                         PlayerStatRow(playerStats: playerStats) {
                             selectedPlayerForStats = playerStats
-                            showingPlayerStatsModal = true
                         }
                     }
                 }

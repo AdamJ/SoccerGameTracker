@@ -50,6 +50,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Player stats sheet presentation now uses `.sheet(item:)` for reliable display
+  — `GameTrackerView.swift` (fixed blank sheet issue on first tap by using item-based sheet presentation instead of boolean-based)
 - Refactored AppColors to bridge legacy colors to new semantic color system
   — `/SoccerGameTracker/AppColors.swift` (maintains backward compatibility)
 - Enhanced StatButton with improved accessibility support
