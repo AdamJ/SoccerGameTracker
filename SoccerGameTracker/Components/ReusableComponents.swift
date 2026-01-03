@@ -2,46 +2,50 @@ import SwiftUI
 
 // MARK: - Score Display Component
 struct ScoreDisplay: View {
-    let homeScore: Int
+    let ourScore: Int
     let opponentScore: Int
+    let ourTeamName: String
     let opponentName: String
+    let isHomeTeam: Bool
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.xl) {
-            // Home team score
+            // Left side (our team if home, opponent if away)
             VStack(spacing: DesignTokens.Spacing.xs) {
-                Text("HOME")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(SemanticColors.textSecondary)
-
-                Text("\(homeScore)")
-                    .font(.system(size: DesignTokens.FontSize.display, weight: .bold, design: .rounded))
-                    .foregroundColor(SemanticColors.primary)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Home team score: \(homeScore)")
-
-            Text(":")
-                .font(.system(size: 32, weight: .light))
-                .foregroundColor(SemanticColors.textSecondary)
-                .accessibilityHidden(true)
-
-            // Opponent score
-            VStack(spacing: DesignTokens.Spacing.xs) {
-                Text(opponentName.uppercased())
+                Text(isHomeTeam ? ourTeamName.uppercased() : opponentName.uppercased())
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(SemanticColors.textSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
 
-                Text("\(opponentScore)")
+                Text("\(isHomeTeam ? ourScore : opponentScore)")
                     .font(.system(size: DesignTokens.FontSize.display, weight: .bold, design: .rounded))
-                    .foregroundColor(SemanticColors.accentVariant)
+                    .foregroundColor(isHomeTeam ? SemanticColors.primary : SemanticColors.accentVariant)
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(opponentName) score: \(opponentScore)")
+            .accessibilityLabel("\(isHomeTeam ? ourTeamName : opponentName) score: \(isHomeTeam ? ourScore : opponentScore)")
+
+            Text(":")
+                .font(.system(size: 32, weight: .light))
+                .foregroundColor(SemanticColors.textSecondary)
+                .accessibilityHidden(true)
+
+            // Right side (opponent if home, our team if away)
+            VStack(spacing: DesignTokens.Spacing.xs) {
+                Text(isHomeTeam ? opponentName.uppercased() : ourTeamName.uppercased())
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+
+                Text("\(isHomeTeam ? opponentScore : ourScore)")
+                    .font(.system(size: DesignTokens.FontSize.display, weight: .bold, design: .rounded))
+                    .foregroundColor(isHomeTeam ? SemanticColors.accentVariant : SemanticColors.primary)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(isHomeTeam ? opponentName : ourTeamName) score: \(isHomeTeam ? opponentScore : ourScore)")
         }
         .padding(.vertical, DesignTokens.Spacing.sm)
     }

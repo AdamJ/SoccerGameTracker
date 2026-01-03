@@ -12,8 +12,8 @@ class GameManager: ObservableObject {
         return false
     }
     
-    func startGame(opponentName: String, gameDate: Date, location: String, roster: [Player], durationInSeconds: Int) {
-        currentGame = Game(opponentName: opponentName, gameDate: gameDate, location: location, roster: roster, durationInSeconds: durationInSeconds)
+    func startGame(ourTeamName: String, opponentName: String, isHomeTeam: Bool, gameDate: Date, location: String, roster: [Player], durationInSeconds: Int) {
+        currentGame = Game(ourTeamName: ourTeamName, opponentName: opponentName, isHomeTeam: isHomeTeam, gameDate: gameDate, location: location, roster: roster, durationInSeconds: durationInSeconds)
     }
     
     func endGame() {

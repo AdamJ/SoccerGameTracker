@@ -36,6 +36,34 @@ struct EndGameConfirmationView: View {
             }
         }
 
+        // Game actions timeline
+        if !game.actions.isEmpty {
+            summary += "\n⏱ Game Actions:\n\n"
+
+            let firstHalfActions = game.actions
+                .filter { $0.gameHalf == .first }
+                .sorted { $0.elapsedSeconds < $1.elapsedSeconds }
+
+            let secondHalfActions = game.actions
+                .filter { $0.gameHalf == .second }
+                .sorted { $0.elapsedSeconds < $1.elapsedSeconds }
+
+            if !firstHalfActions.isEmpty {
+                summary += "First Half:\n"
+                for action in firstHalfActions {
+                    summary += "[\(action.timeString())] \(action.displayDescription())\n"
+                }
+                summary += "\n"
+            }
+
+            if !secondHalfActions.isEmpty {
+                summary += "Second Half:\n"
+                for action in secondHalfActions {
+                    summary += "[\(action.timeString())] \(action.displayDescription())\n"
+                }
+            }
+        }
+
         return summary
     }
 
@@ -56,9 +84,11 @@ struct EndGameConfirmationView: View {
 
                 // Final Score Display
                 ScoreDisplay(
-                    homeScore: game.ourScore,
+                    ourScore: game.ourScore,
                     opponentScore: game.opponentScore,
-                    opponentName: game.opponentName
+                    ourTeamName: game.ourTeamName,
+                    opponentName: game.opponentName,
+                    isHomeTeam: game.isHomeTeam
                 )
                 .padding()
                 .cardStyle(backgroundColor: SemanticColors.surfaceVariant)
@@ -124,7 +154,9 @@ struct EndGameConfirmationView_Previews: PreviewProvider {
     static var previews: some View {
         let managers = PreviewManagers(populated: true)
         let game = Game(
+            ourTeamName: "Eagles",
             opponentName: "Rivals",
+            isHomeTeam: true,
             gameDate: Date(),
             location: "Home Field",
             roster: managers.rosterManager.roster,

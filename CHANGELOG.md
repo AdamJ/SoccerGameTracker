@@ -6,6 +6,29 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Action logging system to track individual game events with timestamps
+  — `GameAction.swift` (new data model with actionType enum, timestamp, gameHalf, elapsedSeconds, player details)
+  — `Game.swift` (added actions array, logAction() and removeAction() methods, Codable support)
+  — Tracks goals (team/unknown/opponent), assists, saves, shots, yellow cards, red cards
+  — Actions grouped by half and sorted chronologically
+- Actions view in live game tracker
+  — `ActionsTabView.swift` (new view with ActionRow component showing action timeline)
+  — Accessible via "Actions" button in GameTrackerView
+  — Swipe-to-delete functionality that maintains stat consistency
+  — Empty state for games without actions
+- Action logging integrated throughout game flow
+  — `GameTrackerView.swift` (action logging on all stat increments: goals, assists, saves, cards, shots, opponent goals)
+  — `GoalAssignmentView` logs actions when goals confirmed with/without assists
+  — `PlayerStatsDetailView` StatButtons log actions when stats incremented
+  — Goal decrement finds and removes most recent action for player
+- Action timeline in game summaries and history
+  — `EndGameConfirmationView.swift` (share text includes action timeline grouped by half)
+  — `GameSummaryView.swift` (action log section with ActionSummaryRow component)
+  — Actions display elapsed game time, icon, description, and actual timestamp
+  — Historical games show read-only action timeline
+
+### Changed
+
 - Created semantic color system with WCAG AA accessibility compliance for light and dark modes
   — `/SoccerGameTracker/Theme/SemanticColors.swift` (adaptive colors with fallbacks)
 - Implemented design tokens for consistent spacing, sizing, typography, and animations
@@ -14,6 +37,16 @@ All notable changes to this project will be documented in this file.
   — `/SoccerGameTracker/Theme/ViewModifiers.swift` (CardStyle, PrimaryButtonStyle, SecondaryButtonStyle, BadgeStyle, conditional modifiers)
 - Built reusable UI components for common patterns
   — `/SoccerGameTracker/Components/ReusableComponents.swift` (ScoreDisplay, GameStatusBadge, TimerDisplay, EmptyStateView, ActionButton, StatBadgeView, PlayerNumberBadge)
+- Added team format selection (5v5, 7v7, 11v11)
+  — `TeamFormat.swift` (team format enum with player counts and descriptions)
+  — `RosterManager.swift` (team format and home/away status storage with persistence)
+- Enhanced roster view with team configuration and position grouping
+  — `RosterView.swift` (team name input, format picker, home/away toggle, players grouped by position with substitutes separate, empty state, player count badges)
+- Integrated team name and home/away status throughout game flow
+  — `Game.swift` (added ourTeamName and isHomeTeam properties with Codable support)
+  — `GameManager.swift` (updated startGame to accept team name and home/away status)
+  — `GameSetupView.swift` (passes team configuration from RosterManager to new games)
+  — `Components/ReusableComponents.swift` (ScoreDisplay updated to show correct team names based on home/away status)
 
 ### Changed
 

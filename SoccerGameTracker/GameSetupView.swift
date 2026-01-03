@@ -222,9 +222,11 @@ struct GameSetupView: View {
         
         let selectedRoster = rosterManager.roster.filter { selectedPlayers.contains($0.id) }
         let halfDurationInSeconds = halfDurationMinutes * 60
-        
+
         gameManager.startGame(
+            ourTeamName: rosterManager.homeTeamName,
             opponentName: trimmedOpponent,
+            isHomeTeam: rosterManager.isHomeTeam,
             gameDate: gameDate,
             location: trimmedLocation,
             roster: selectedRoster,

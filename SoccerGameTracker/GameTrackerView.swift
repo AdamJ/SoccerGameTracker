@@ -11,7 +11,8 @@ struct GameTrackerView: View {
     @State private var showingGoalRemovalModal = false
     @State private var showingOpponentGoalRemovalModal = false
     @State private var showingEndGameConfirmation = false
-    
+    @State private var showingActionsLog = false
+
     var body: some View {
         VStack(spacing: 0) {
             // Header with score and game info
@@ -52,6 +53,21 @@ struct GameTrackerView: View {
                     gameManager.endGame()
                 }
             )
+        }
+        .sheet(isPresented: $showingActionsLog) {
+            NavigationView {
+                ActionsTabView(game: game)
+                    .navigationTitle("Game Actions")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") {
+                                showingActionsLog = false
+                            }
+                            .foregroundColor(SemanticColors.primary)
+                        }
+                    }
+            }
         }
         .alert("Half Time", isPresented: $showingHalfTimeAlert) {
             Button("Start Second Half") {
@@ -187,6 +203,13 @@ struct GameTrackerView: View {
                 .buttonStyle(.bordered)
                 .foregroundColor(AppColors.darkBlue)
                 .accessibilityLabel("View game summary")
+
+                Button("Actions") {
+                    showingActionsLog = true
+                }
+                .buttonStyle(.bordered)
+                .foregroundColor(AppColors.primary)
+                .accessibilityLabel("View game actions")
             }
         }
         .padding()
@@ -235,6 +258,10 @@ struct GameTrackerView: View {
                 // Opponent goal button
                 Button {
                     game.opponentScore += 1
+                    game.logAction(
+                        actionType: .opponentGoal,
+                        playerName: game.opponentName
+                    )
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "soccerball.inverse")
@@ -422,8 +449,22 @@ struct PlayerStatsDetailView: View {
                         HStack(spacing: DesignTokens.Spacing.lg) {
                             StatButton(label: "Goals", value: $playerStats.goals) {
                                 game.ourScore += 1
+                                game.logAction(
+                                    actionType: .teamGoal,
+                                    playerId: playerStats.id,
+                                    playerName: playerStats.name,
+                                    playerNumber: playerStats.number
+                                )
                             } onDecrement: {
                                 if game.ourScore > 0 { game.ourScore -= 1 }
+                                // Find and remove the most recent goal action for this player
+                                if let goalAction = game.actions
+                                    .filter({ ($0.actionType == .teamGoal || $0.actionType == .teamGoalWithAssist) &&
+                                              $0.playerId == playerStats.id })
+                                    .sorted(by: { $0.timestamp > $1.timestamp })
+                                    .first {
+                                    game.removeAction(goalAction)
+                                }
                             }
 
                             StatButton(label: "Assists", value: $playerStats.assists)
@@ -431,10 +472,24 @@ struct PlayerStatsDetailView: View {
 
                         // Second row - Shots and Saves (Saves only for GK)
                         HStack(spacing: DesignTokens.Spacing.lg) {
-                            StatButton(label: "Shots", value: $playerStats.totalShots)
+                            StatButton(label: "Shots", value: $playerStats.totalShots) {
+                                game.logAction(
+                                    actionType: .shot,
+                                    playerId: playerStats.id,
+                                    playerName: playerStats.name,
+                                    playerNumber: playerStats.number
+                                )
+                            }
 
                             if playerStats.position == .goalkeeper {
-                                StatButton(label: "Saves", value: $playerStats.saves)
+                                StatButton(label: "Saves", value: $playerStats.saves) {
+                                    game.logAction(
+                                        actionType: .save,
+                                        playerId: playerStats.id,
+                                        playerName: playerStats.name,
+                                        playerNumber: playerStats.number
+                                    )
+                                }
                             } else {
                                 // Placeholder to keep grid aligned
                                 Color.clear
@@ -444,9 +499,23 @@ struct PlayerStatsDetailView: View {
 
                         // Third row - Yellow and Red Cards
                         HStack(spacing: DesignTokens.Spacing.lg) {
-                            StatButton(label: "Yellow Cards", value: $playerStats.yellowCards)
+                            StatButton(label: "Yellow Cards", value: $playerStats.yellowCards) {
+                                game.logAction(
+                                    actionType: .yellowCard,
+                                    playerId: playerStats.id,
+                                    playerName: playerStats.name,
+                                    playerNumber: playerStats.number
+                                )
+                            }
 
-                            StatButton(label: "Red Cards", value: $playerStats.redCards)
+                            StatButton(label: "Red Cards", value: $playerStats.redCards) {
+                                game.logAction(
+                                    actionType: .redCard,
+                                    playerId: playerStats.id,
+                                    playerName: playerStats.name,
+                                    playerNumber: playerStats.number
+                                )
+                            }
                         }
                     }
                     .padding(.horizontal, DesignTokens.Spacing.lg)
@@ -494,6 +563,10 @@ struct GoalAssignmentView: View {
                         Button {
                             game.unknownGoals += 1
                             game.ourScore += 1
+                            game.logAction(
+                                actionType: .unknownGoal,
+                                playerName: "Unknown Player"
+                            )
                             dismiss()
                         } label: {
                             HStack {
@@ -569,6 +642,22 @@ struct GoalAssignmentView: View {
                             selectedPlayer.goals += 1
                             if let assist = assistingPlayer {
                                 assist.assists += 1
+                                game.logAction(
+                                    actionType: .teamGoalWithAssist,
+                                    playerId: selectedPlayer.id,
+                                    playerName: selectedPlayer.name,
+                                    playerNumber: selectedPlayer.number,
+                                    assistPlayerId: assist.id,
+                                    assistPlayerName: assist.name,
+                                    assistPlayerNumber: assist.number
+                                )
+                            } else {
+                                game.logAction(
+                                    actionType: .teamGoal,
+                                    playerId: selectedPlayer.id,
+                                    playerName: selectedPlayer.name,
+                                    playerNumber: selectedPlayer.number
+                                )
                             }
                             game.ourScore += 1
                             dismiss()

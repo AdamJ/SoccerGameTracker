@@ -49,7 +49,7 @@ final class PreviewManagers: ObservableObject {
             rosterManager.homeTeamName = "TIGERS"
 
             // Active game for populated preview
-            let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "United Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
+            let activeGame = Game(ourTeamName: "Hawks", opponentName: "Rivals", isHomeTeam: true, gameDate: Date(), location: "United Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             activeGame.ourScore = 2
             activeGame.opponentScore = 1
             if activeGame.playerStats.indices.contains(8) { activeGame.playerStats[8].goals = 1 }
@@ -57,23 +57,23 @@ final class PreviewManagers: ObservableObject {
             gameManager.currentGame = activeGame
 
             // Multiple past games in history
-            let past1 = Game(opponentName: "Eagles", gameDate: Date().addingTimeInterval(-86400 * 3), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
+            let past1 = Game(ourTeamName: "Hawks", opponentName: "Eagles", isHomeTeam: false, gameDate: Date().addingTimeInterval(-86400 * 3), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past1.ourScore = 3
             past1.opponentScore = 2
             if past1.playerStats.indices.contains(6) { past1.playerStats[6].goals = 2 }
             if past1.playerStats.indices.contains(5) { past1.playerStats[5].assists = 1 }
 
-            let past2 = Game(opponentName: "Lions", gameDate: Date().addingTimeInterval(-86400 * 10), location: "United Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
+            let past2 = Game(ourTeamName: "Hawks", opponentName: "Lions", isHomeTeam: true, gameDate: Date().addingTimeInterval(-86400 * 10), location: "United Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past2.ourScore = 1
             past2.opponentScore = 1
             if past2.playerStats.indices.contains(2) { past2.playerStats[2].saves = 1 }
 
-            let past3 = Game(opponentName: "Panthers", gameDate: Date().addingTimeInterval(-86400 * 30), location: "Neutral", roster: rosterManager.roster, durationInSeconds: 25 * 60)
+            let past3 = Game(ourTeamName: "Hawks", opponentName: "Panthers", isHomeTeam: true, gameDate: Date().addingTimeInterval(-86400 * 30), location: "Neutral", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past3.ourScore = 0
             past3.opponentScore = 2
             if past3.playerStats.indices.contains(0) { past3.playerStats[0].saves = 4 }
 
-            let past4 = Game(opponentName: "Wolves", gameDate: Date().addingTimeInterval(-86400 * 60), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
+            let past4 = Game(ourTeamName: "Hawks", opponentName: "Wolves", isHomeTeam: false, gameDate: Date().addingTimeInterval(-86400 * 60), location: "Away Field", roster: rosterManager.roster, durationInSeconds: 25 * 60)
             past4.ourScore = 4
             past4.opponentScore = 0
             if past4.playerStats.indices.contains(9) { past4.playerStats[9].goals = 2 }
@@ -118,7 +118,7 @@ struct LiveGamePreviewView: View {
 
     var body: some View {
         // Create an active game using the preview roster so the tracker shows populated player stats
-        let activeGame = Game(opponentName: "Rivals", gameDate: Date(), location: "Home Field", roster: managers.rosterManager.roster, durationInSeconds: 25 * 60)
+        let activeGame = Game(ourTeamName: "Hawks", opponentName: "Rivals", isHomeTeam: true, gameDate: Date(), location: "Home Field", roster: managers.rosterManager.roster, durationInSeconds: 25 * 60)
         activeGame.ourScore = 2
         activeGame.opponentScore = 1
         if activeGame.playerStats.indices.contains(8) { activeGame.playerStats[8].goals = 1 }
