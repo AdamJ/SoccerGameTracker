@@ -493,24 +493,24 @@ struct PlayerStatsDetailView: View {
 
                         // Second row - Shots and Saves (Saves only for GK)
                         HStack(spacing: DesignTokens.Spacing.lg) {
-                            StatButton(label: "Shots", value: $playerStats.totalShots) {
+                            StatButton(label: "Shots", value: $playerStats.totalShots, onDecrement:  {
                                 game.logAction(
                                     actionType: .shot,
                                     playerId: playerStats.id,
                                     playerName: playerStats.name,
                                     playerNumber: playerStats.number
                                 )
-                            }
+                            })
 
                             if playerStats.position == .goalkeeper {
-                                StatButton(label: "Saves", value: $playerStats.saves) {
+                                StatButton(label: "Saves", value: $playerStats.saves, onDecrement:  {
                                     game.logAction(
                                         actionType: .save,
                                         playerId: playerStats.id,
                                         playerName: playerStats.name,
                                         playerNumber: playerStats.number
                                     )
-                                }
+                                })
                             } else {
                                 // Placeholder to keep grid aligned
                                 Color.clear
@@ -520,23 +520,23 @@ struct PlayerStatsDetailView: View {
 
                         // Third row - Yellow and Red Cards
                         HStack(spacing: DesignTokens.Spacing.lg) {
-                            StatButton(label: "Yellow Cards", value: $playerStats.yellowCards) {
+                            StatButton(label: "Yellow Cards", value: $playerStats.yellowCards, onDecrement:  {
                                 game.logAction(
                                     actionType: .yellowCard,
                                     playerId: playerStats.id,
                                     playerName: playerStats.name,
                                     playerNumber: playerStats.number
                                 )
-                            }
+                            })
 
-                            StatButton(label: "Red Cards", value: $playerStats.redCards) {
+                            StatButton(label: "Red Cards", value: $playerStats.redCards, onDecrement:  {
                                 game.logAction(
                                     actionType: .redCard,
                                     playerId: playerStats.id,
                                     playerName: playerStats.name,
                                     playerNumber: playerStats.number
                                 )
-                            }
+                            })
                         }
                     }
                     .padding(.horizontal, DesignTokens.Spacing.lg)
