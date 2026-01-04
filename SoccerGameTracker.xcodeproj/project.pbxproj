@@ -7,11 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A095ED392EEDFC8100D367D6 /* EndGameConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A095ED382EEDFC8100D367D6 /* EndGameConfirmationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A095ED382EEDFC8100D367D6 /* EndGameConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndGameConfirmationView.swift; sourceTree = "<group>"; };
 		A0BAD2A82E678EB5003A363F /* SoccerGameTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SoccerGameTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -37,7 +35,6 @@
 			children = (
 				A0BAD2AA2E678EB5003A363F /* SoccerGameTracker */,
 				A0BAD2A92E678EB5003A363F /* Products */,
-				A095ED382EEDFC8100D367D6 /* EndGameConfirmationView.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -116,7 +113,6 @@
 		A0BAD2A42E678EB5003A363F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
-				A095ED392EEDFC8100D367D6 /* EndGameConfirmationView.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
