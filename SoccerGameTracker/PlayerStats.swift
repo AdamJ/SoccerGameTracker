@@ -13,17 +13,19 @@ class PlayerStats: ObservableObject, Identifiable, Codable {
     @Published var totalShots: Int = 0
     @Published var minutesPlayed: Int = 0
     @Published var isSubstituted: Bool = false
-    
-    init(id: UUID, name: String, number: Int, position: Position) {
+    @Published var isSubstitute: Bool = false  // Started game on the bench
+
+    init(id: UUID, name: String, number: Int, position: Position, isSubstitute: Bool = false) {
         self.id = id
         self.name = name
         self.number = number
         self.position = position
+        self.isSubstitute = isSubstitute
     }
     
     // MARK: - Codable
     enum CodingKeys: String, CodingKey {
-        case id, name, number, position, goals, assists, yellowCards, redCards, saves, totalShots, minutesPlayed, isSubstituted
+        case id, name, number, position, goals, assists, yellowCards, redCards, saves, totalShots, minutesPlayed, isSubstituted, isSubstitute
     }
     
     required init(from decoder: Decoder) throws {
@@ -40,6 +42,7 @@ class PlayerStats: ObservableObject, Identifiable, Codable {
         totalShots = (try? container.decode(Int.self, forKey: .totalShots)) ?? 0
         minutesPlayed = try container.decode(Int.self, forKey: .minutesPlayed)
         isSubstituted = try container.decode(Bool.self, forKey: .isSubstituted)
+        isSubstitute = (try? container.decode(Bool.self, forKey: .isSubstitute)) ?? false
     }
     
     func encode(to encoder: Encoder) throws {
@@ -56,6 +59,7 @@ class PlayerStats: ObservableObject, Identifiable, Codable {
         try container.encode(totalShots, forKey: .totalShots)
         try container.encode(minutesPlayed, forKey: .minutesPlayed)
         try container.encode(isSubstituted, forKey: .isSubstituted)
+        try container.encode(isSubstitute, forKey: .isSubstitute)
     }
     
     // MARK: - Stat Management

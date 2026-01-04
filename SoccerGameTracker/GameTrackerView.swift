@@ -16,13 +16,10 @@ struct GameTrackerView: View {
         VStack(spacing: 0) {
             // Header with score and game info
             gameHeader
-            
             // Timer and game controls
             timerSection
-            
             // Quick actions
             quickActionsSection
-            
             // Players list
             playersSection
         }
@@ -217,73 +214,74 @@ struct GameTrackerView: View {
             Text("Quick Actions")
                 .font(.headline)
                 .foregroundColor(AppColors.primary)
-            
-            // First row - Our team actions
-            HStack(spacing: 12) {
-                // Our goal button - opens assignment modal
-                Button {
-                    showingGoalAssignmentModal = true
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: "soccerball")
-                            .font(.title2)
-                        Text("Team Goal")
-                            .font(.caption)
+            HStack {
+                // First row - Our team actions
+                VStack(spacing: 12) {
+                    // Our goal button - opens assignment modal
+                    Button {
+                        showingGoalAssignmentModal = true
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "soccerball")
+                                .font(.title2)
+                            Text("Team Goal")
+                                .font(.caption)
+                        }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppColors.primary)
+                    
+                    // Remove our goal button
+                    Button {
+                        showingGoalRemovalModal = true
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "minus.circle")
+                                .font(.title2)
+                            Text("Remove Team Goal")
+                                .font(.caption)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(AppColors.danger)
+                    .disabled(game.ourScore == 0)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AppColors.primary)
                 
-                // Remove our goal button
-                Button {
-                    showingGoalRemovalModal = true
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: "minus.circle")
-                            .font(.title2)
-                        Text("Remove Team Goal")
-                            .font(.caption)
+                // Second row - Opponent actions
+                VStack(spacing: 12) {
+                    // Opponent goal button
+                    Button {
+                        game.opponentScore += 1
+                        game.logAction(
+                            actionType: .opponentGoal,
+                            playerName: game.opponentName
+                        )
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "soccerball.inverse")
+                                .font(.title2)
+                            Text("Opponent Goal")
+                                .font(.caption)
+                        }
                     }
-                }
-                .buttonStyle(.bordered)
-                .foregroundColor(AppColors.danger)
-                .disabled(game.ourScore == 0)
-            }
-            
-            // Second row - Opponent actions
-            HStack(spacing: 12) {
-                // Opponent goal button
-                Button {
-                    game.opponentScore += 1
-                    game.logAction(
-                        actionType: .opponentGoal,
-                        playerName: game.opponentName
-                    )
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: "soccerball.inverse")
-                            .font(.title2)
-                        Text("Opponent Goal")
-                            .font(.caption)
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppColors.danger)
+                    
+                    // Remove opponent goal button
+                    Button {
+                        showingOpponentGoalRemovalModal = true
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title2)
+                            Text("Subtract Goal")
+                                .font(.caption)
+                        }
                     }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(AppColors.danger)
+                    .disabled(game.opponentScore == 0)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AppColors.coral)
-                
-                // Remove opponent goal button
-                Button {
-                    showingOpponentGoalRemovalModal = true
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.title2)
-                        Text("Subtract Opponent Goal")
-                            .font(.caption)
-                    }
-                }
-                .buttonStyle(.bordered)
-                .foregroundColor(AppColors.danger)
-                .disabled(game.opponentScore == 0)
             }
         }
         .padding()
@@ -344,7 +342,12 @@ struct PlayerStatRow: View {
                         .font(.body)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
-                    if playerStats.isSubstituted {
+                    if playerStats.isSubstitute {
+                        Text("SUB")
+                            .font(.caption2)
+                            .foregroundColor(SemanticColors.warning)
+                            .fontWeight(.semibold)
+                    } else if playerStats.isSubstituted {
                         Text("SUBSTITUTED")
                             .font(.caption2)
                             .foregroundColor(AppColors.orange)
@@ -436,11 +439,33 @@ struct PlayerStatsDetailView: View {
                             .font(.subheadline)
                             .foregroundColor(SemanticColors.textSecondary)
                             .badgeStyle(color: SemanticColors.primary, size: .medium)
+
+                        if playerStats.isSubstitute {
+                            Text("SUBSTITUTE")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(SemanticColors.warning)
+                                .padding(.horizontal, DesignTokens.Spacing.sm)
+                                .padding(.vertical, DesignTokens.Spacing.xs)
+                                .background(SemanticColors.warning.opacity(0.15))
+                                .cornerRadius(DesignTokens.CornerRadius.sm)
+                        }
                     }
                     .padding(.top, DesignTokens.Spacing.lg)
 
                     // Stats grid - Always show all stats with 0 values for empty stats
                     VStack(spacing: DesignTokens.Spacing.lg) {
+                        if playerStats.isSubstitute {
+                            Text("Substitutes cannot record stats. Only players on the field can score goals, assists, or make saves.")
+                                .font(.subheadline)
+                                .foregroundColor(SemanticColors.textSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, DesignTokens.Spacing.lg)
+                                .padding(.vertical, DesignTokens.Spacing.md)
+                                .background(SemanticColors.surface)
+                                .cornerRadius(DesignTokens.CornerRadius.md)
+                        }
+
                         // First row - Goals and Assists
                         HStack(spacing: DesignTokens.Spacing.lg) {
                             StatButton(label: "Goals", value: $playerStats.goals) {
@@ -515,6 +540,8 @@ struct PlayerStatsDetailView: View {
                         }
                     }
                     .padding(.horizontal, DesignTokens.Spacing.lg)
+                    .disabled(playerStats.isSubstitute)
+                    .opacity(playerStats.isSubstitute ? 0.5 : 1.0)
 
                     // Substitution toggle
                     Toggle("Substituted", isOn: $playerStats.isSubstituted)
@@ -910,3 +937,66 @@ struct OpponentGoalRemovalView: View {
         }
     }
 }
+#if DEBUG
+import SwiftData
+
+private extension Game {
+    static func samplePopulated() -> Game {
+        let players = [
+            Player(name: "Alex Morgan", number: 7, position: .forward),
+            Player(name: "Sam Kerr", number: 10, position: .midfielder),
+            Player(name: "Jane Doe", number: 1, position: .goalkeeper)
+        ]
+        let game = Game(
+            ourTeamName: "Hawks",
+            opponentName: "Rivals FC",
+            isHomeTeam: true,
+            gameDate: Date(),
+            location: "Main Stadium",
+            roster: players,
+            durationInSeconds: 45 * 60
+        )
+        // Set some stats for preview
+        game.ourScore = 2
+        game.opponentScore = 1
+        if game.playerStats.count >= 3 {
+            game.playerStats[0].goals = 2
+            game.playerStats[1].assists = 1
+            game.playerStats[2].saves = 4
+        }
+        return game
+    }
+
+    static func sampleUnpopulated() -> Game {
+        Game(
+            ourTeamName: "Team",
+            opponentName: "Opponent",
+            isHomeTeam: true,
+            gameDate: Date(),
+            location: "Field 9",
+            roster: [],
+            durationInSeconds: 45 * 60
+        )
+    }
+}
+
+private class PreviewGameManager: GameManager {
+    override init() {
+        super.init()
+        // Optionally, configure preview stubs
+    }
+    override func endGame() {}
+}
+
+#Preview("Populated Game") {
+    GameTrackerView(game: .samplePopulated())
+        .environmentObject(PreviewGameManager())
+}
+
+#Preview("Unpopulated Game") {
+    GameTrackerView(game: .sampleUnpopulated())
+        .environmentObject(PreviewGameManager())
+}
+#endif
+
+

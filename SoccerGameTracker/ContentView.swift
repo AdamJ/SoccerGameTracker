@@ -12,6 +12,7 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             RosterView()
                 .environmentObject(rosterManager)
+                .environmentObject(gameManager)
                 .tabItem {
                     Image(systemName: "person.3")
                     Text("Roster")

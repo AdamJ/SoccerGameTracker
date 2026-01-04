@@ -5,8 +5,13 @@ enum Position: String, CaseIterable, Codable, Hashable {
     case defender = "Defender"
     case midfielder = "Midfielder"
     case forward = "Forward"
-    case substitute = "Substitute (SUB)"
-    
+    case substitute = "Substitute (SUB)"  // Deprecated: Use isSubstitute flag on Player instead
+
+    /// Positions available for selection in UI (excludes deprecated substitute)
+    static var displayPositions: [Position] {
+        [.goalkeeper, .defender, .midfielder, .forward]
+    }
+
     var abbreviation: String {
         switch self {
         case .goalkeeper:
@@ -21,7 +26,7 @@ enum Position: String, CaseIterable, Codable, Hashable {
             return "SUB"
         }
     }
-    
+
     var displayName: String {
         return self.rawValue
     }

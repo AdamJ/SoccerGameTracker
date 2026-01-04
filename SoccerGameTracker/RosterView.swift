@@ -2,16 +2,19 @@ import SwiftUI
 
 struct RosterView: View {
     @EnvironmentObject var rosterManager: RosterManager
+    @EnvironmentObject var gameManager: GameManager
     @State private var showingAddPlayer = false
+    @State private var playerToEdit: Player?
+    @State private var showingGKDeletionAlert = false
 
-    // Group players by position
+    // Group players by position (starting lineup only, excludes substitutes)
     private var groupedPlayers: [(Position, [Player])] {
         let positions: [Position] = [.goalkeeper, .defender, .midfielder, .forward]
         var grouped: [(Position, [Player])] = []
 
         for position in positions {
             let players = rosterManager.roster
-                .filter { $0.position == position }
+                .filter { $0.position == position && !$0.isSubstitute }
                 .sorted { $0.number < $1.number }
             if !players.isEmpty {
                 grouped.append((position, players))
@@ -23,7 +26,7 @@ struct RosterView: View {
 
     private var substitutes: [Player] {
         rosterManager.roster
-            .filter { $0.position == .substitute }
+            .filter { $0.isSubstitute }
             .sorted { $0.number < $1.number }
     }
 
@@ -73,9 +76,22 @@ struct RosterView: View {
                     Section {
                         ForEach(players) { player in
                             PlayerRowView(player: player)
+                                .onTapGesture {
+                                    if !gameManager.isGameActive {
+                                        playerToEdit = player
+                                    }
+                                }
+                                .opacity(gameManager.isGameActive ? 0.5 : 1.0)
                         }
                         .onDelete { offsets in
-                            deletePlayersFromSection(players: players, offsets: offsets)
+                            if !gameManager.isGameActive {
+                                let playersToDelete = offsets.map { players[$0] }
+                                if rosterManager.wouldRemoveOnlyGoalkeeper(removing: playersToDelete) {
+                                    showingGKDeletionAlert = true
+                                } else {
+                                    deletePlayersFromSection(players: players, offsets: offsets)
+                                }
+                            }
                         }
                     } header: {
                         HStack {
@@ -91,10 +107,18 @@ struct RosterView: View {
                 if !substitutes.isEmpty {
                     Section {
                         ForEach(substitutes) { player in
-                            PlayerRowView(player: player)
+                            PlayerRowView(player: player, showSubstituteLabel: true)
+                                .onTapGesture {
+                                    if !gameManager.isGameActive {
+                                        playerToEdit = player
+                                    }
+                                }
+                                .opacity(gameManager.isGameActive ? 0.5 : 1.0)
                         }
                         .onDelete { offsets in
-                            deletePlayersFromSection(players: substitutes, offsets: offsets)
+                            if !gameManager.isGameActive {
+                                deletePlayersFromSection(players: substitutes, offsets: offsets)
+                            }
                         }
                     } header: {
                         HStack {
@@ -138,11 +162,27 @@ struct RosterView: View {
                         Image(systemName: "plus")
                             .foregroundColor(SemanticColors.primary)
                     }
+                    .disabled(gameManager.isGameActive)
+                    .opacity(gameManager.isGameActive ? 0.5 : 1.0)
                     .accessibilityLabel("Add Player")
                 }
             }
             .sheet(isPresented: $showingAddPlayer) {
                 AddPlayerView(rosterManager: rosterManager)
+            }
+            .sheet(item: $playerToEdit) { player in
+                PlayerEditView(
+                    rosterManager: rosterManager,
+                    player: Binding(
+                        get: { player },
+                        set: { _ in }
+                    )
+                )
+            }
+            .alert("Cannot Delete Goalkeeper", isPresented: $showingGKDeletionAlert) {
+                Button("OK") {}
+            } message: {
+                Text("Your team must have at least one goalkeeper in the starting lineup.")
             }
         }
     }
@@ -159,6 +199,7 @@ struct RosterView: View {
 
 struct PlayerRowView: View {
     let player: Player
+    var showSubstituteLabel: Bool = false
 
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.md) {
@@ -171,9 +212,16 @@ struct PlayerRowView: View {
                     .font(.headline)
                     .foregroundColor(SemanticColors.textPrimary)
 
-                Text(player.position.displayName)
-                    .font(.caption)
-                    .foregroundColor(SemanticColors.textSecondary)
+                // Show position with SUB indicator if needed
+                if showSubstituteLabel {
+                    Text("\(player.position.displayName) • SUB")
+                        .font(.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
+                } else {
+                    Text(player.position.displayName)
+                        .font(.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
+                }
             }
 
             Spacer()
@@ -185,8 +233,45 @@ struct PlayerRowView: View {
 #if DEBUG
 struct RosterView_Previews: PreviewProvider {
     static var previews: some View {
-        RosterView()
-            .environmentObject(RosterManager())
+        Group {
+            // Empty roster
+            RosterView()
+                .environmentObject(RosterManager())
+                .environmentObject(GameManager())
+                .previewDisplayName("Empty Roster")
+
+            // Populated roster with starters and substitutes
+            RosterView()
+                .environmentObject(populatedRosterManager())
+                .environmentObject(GameManager())
+                .previewDisplayName("Populated Roster")
+        }
+    }
+
+    static func populatedRosterManager() -> RosterManager {
+        let manager = RosterManager()
+        manager.homeTeamName = "Hawks FC"
+        manager.teamFormat = .sevenVSeven
+        manager.isHomeTeam = true
+
+        // Starting lineup (7 players for 7v7)
+        manager.roster = [
+            Player(name: "Emma Johnson", number: 1, position: .goalkeeper, isSubstitute: false),
+            Player(name: "Sophia Martinez", number: 3, position: .defender, isSubstitute: false),
+            Player(name: "Olivia Davis", number: 5, position: .defender, isSubstitute: false),
+            Player(name: "Ava Wilson", number: 7, position: .midfielder, isSubstitute: false),
+            Player(name: "Isabella Brown", number: 8, position: .midfielder, isSubstitute: false),
+            Player(name: "Mia Garcia", number: 10, position: .forward, isSubstitute: false),
+            Player(name: "Charlotte Rodriguez", number: 11, position: .forward, isSubstitute: false),
+
+            // Substitutes (retain their positions)
+            Player(name: "Amelia Lee", number: 2, position: .goalkeeper, isSubstitute: true),
+            Player(name: "Harper Taylor", number: 4, position: .defender, isSubstitute: true),
+            Player(name: "Evelyn Anderson", number: 9, position: .midfielder, isSubstitute: true),
+            Player(name: "Abigail Thomas", number: 12, position: .forward, isSubstitute: true)
+        ]
+
+        return manager
     }
 }
 #endif

@@ -32,7 +32,7 @@ class Game: ObservableObject, Identifiable, Codable {
         self.opponentScore = 0
         self.currentHalf = .first
         self.playerStats = roster.map { player in
-            PlayerStats(id: player.id, name: player.name, number: player.number, position: player.position)
+            PlayerStats(id: player.id, name: player.name, number: player.number, position: player.position, isSubstitute: player.isSubstitute)
         }
     }
 
