@@ -753,26 +753,37 @@ struct PlayerGoalAssignmentRow: View {
 struct GoalRemovalView: View {
     @ObservedObject var game: Game
     @Environment(\.dismiss) private var dismiss
-    
+
     var goalSources: [(String, () -> Void)] {
         var sources: [(String, () -> Void)] = []
-        
+
         // Add players with goals
         for player in game.playerStats.filter({ $0.goals > 0 }).sorted(by: { $0.number < $1.number }) {
             sources.append(("#\(player.number) \(player.name) (\(player.goals) goals)", {
-                player.goals -= 1
-                game.ourScore = max(0, game.ourScore - 1)
+                // Find and remove the most recent goal action for this player
+                if let goalAction = game.actions
+                    .filter({ ($0.actionType == .teamGoal || $0.actionType == .teamGoalWithAssist) &&
+                              $0.playerId == player.id })
+                    .sorted(by: { $0.timestamp > $1.timestamp })
+                    .first {
+                    game.removeAction(goalAction)
+                }
             }))
         }
-        
+
         // Add unknown goals if any
         if game.unknownGoals > 0 {
             sources.append(("Unknown Player (\(game.unknownGoals) goals)", {
-                game.unknownGoals -= 1
-                game.ourScore = max(0, game.ourScore - 1)
+                // Find and remove the most recent unknown goal action
+                if let unknownGoalAction = game.actions
+                    .filter({ $0.actionType == .unknownGoal })
+                    .sorted(by: { $0.timestamp > $1.timestamp })
+                    .first {
+                    game.removeAction(unknownGoalAction)
+                }
             }))
         }
-        
+
         return sources
     }
     
@@ -897,7 +908,13 @@ struct OpponentGoalRemovalView: View {
                         
                         // Remove goal button
                         Button {
-                            game.opponentScore = max(0, game.opponentScore - 1)
+                            // Find and remove the most recent opponent goal action
+                            if let opponentGoalAction = game.actions
+                                .filter({ $0.actionType == .opponentGoal })
+                                .sorted(by: { $0.timestamp > $1.timestamp })
+                                .first {
+                                game.removeAction(opponentGoalAction)
+                            }
                             dismiss()
                         } label: {
                             HStack(spacing: 12) {
